@@ -5,14 +5,15 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      default: null, // Optional - users can add name later
     },
 
     email: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true, // Allow multiple null values
       lowercase: true,
+      default: null,
     },
 
     phone: {
@@ -21,7 +22,7 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: true,
+      default: null, // Optional for OTP/Google login
     },
 
     role: {
@@ -29,6 +30,10 @@ const userSchema = new mongoose.Schema(
       enum: ["superadmin", "admin", "vendor", "delivery", "customer"],
       default: "customer",
     },
+    googleId: String,
+
+    otp: String,
+    otpExpire: Date,
 
     status: {
       type: String,
