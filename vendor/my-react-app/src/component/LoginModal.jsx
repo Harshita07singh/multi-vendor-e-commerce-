@@ -18,14 +18,11 @@ const LoginModal = ({ setOpenModal }) => {
     try {
       setLoading(true);
 
-      const res = await fetch(
-        "http://localhost:3000/api/auth/vendor/send-otp",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ emailOrPhone }),
-        },
-      );
+      const res = await fetch("/api/auth/vendor/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emailOrPhone }),
+      });
 
       const data = await res.json();
 
@@ -82,14 +79,11 @@ const LoginModal = ({ setOpenModal }) => {
     try {
       setLoading(true);
 
-      const res = await fetch(
-        "http://localhost:3000/api/auth/vendor/verify-otp",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ emailOrPhone, otp }),
-        },
-      );
+      const res = await fetch("/api/auth/vendor/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emailOrPhone, otp }),
+      });
 
       const data = await res.json();
 
@@ -114,7 +108,7 @@ const LoginModal = ({ setOpenModal }) => {
 
   // 🔹 Google Login
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:3000/api/auth/vendor/google";
+    window.location.href = "/api/auth/vendor/google";
   };
 
   return (

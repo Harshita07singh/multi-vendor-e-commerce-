@@ -1,21 +1,30 @@
 import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const MobileStepper = ({ steps, currentStep }) => {
   const [openMenu, setOpenMenu] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      // Call backend logout
+      await axios.post("/api/auth/logout", {}, { withCredentials: true });
+
+      // Clear frontend storage
+      localStorage.removeItem("accessToken");
+
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
     <div className="bg-gray-100">
       {/* Top Bar */}
       <div className="flex justify-between items-center p-4">
-        {/* Hamburger Icon */}
         <button onClick={() => setOpenMenu(!openMenu)}>
           {openMenu ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -26,7 +35,7 @@ const MobileStepper = ({ steps, currentStep }) => {
         <div className="bg-white shadow-md p-4 space-y-4">
           <button
             onClick={handleLogout}
-            className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg"
+            className="w-50 bg-red-400 hover:bg-red-600 text-white py-2 rounded-lg"
           >
             Logout
           </button>

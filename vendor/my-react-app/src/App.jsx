@@ -8,9 +8,8 @@ import Hero from "./component/Hero/Hero";
 import Footer from "./component/footer/Footer";
 import { Routes, Route } from "react-router-dom";
 import LoginSuccess from "./Page/LoginSuccess";
-// import { Provider } from "react-redux";
-// import { store } from "./redux/store";
 import VendorOnboarding from "./Page/VendorOnboarding/VendorOnboarding";
+import VendorDashboard from "./Page/VendorDashboard";
 
 function MainLayout() {
   return (
@@ -24,15 +23,17 @@ function MainLayout() {
 
 function App() {
   return (
-    // <Provider store={store}>
     <Routes>
+      {/* Main layout routes with Navbar and Footer */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Hero />} />
+        <Route path="/login-success" element={<LoginSuccess />} />
+        <Route path="/dashboard" element={<VendorDashboard />} />
       </Route>
-      <Route path="/login-success" element={<LoginSuccess />} />
+
+      {/* Onboarding route without main layout */}
       <Route path="/vendor/onboarding" element={<VendorOnboarding />} />
     </Routes>
-    // </Provider>
   );
 }
 

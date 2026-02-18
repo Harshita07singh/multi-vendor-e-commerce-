@@ -1,6 +1,23 @@
 import React from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const SidebarStepper = ({ steps, currentStep }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await axios.post("/api/auth/logout", {}, { withCredentials: true });
+
+      // Clear local storage if storing accessToken
+      localStorage.removeItem("accessToken");
+
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {steps.map((step, index) => (
@@ -21,8 +38,12 @@ const SidebarStepper = ({ steps, currentStep }) => {
           </span>
         </div>
       ))}
+
       <div className="px-6 mt-10">
-        <button className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg">
+        <button
+          onClick={handleLogout}
+          className="w-full bg-red-400 hover:bg-red-600 text-white py-2 rounded-lg"
+        >
           Logout
         </button>
       </div>

@@ -18,6 +18,9 @@ const Navbar = () => {
             <Link to="/">Home</Link>
           </li>
           <li className="hover:underline cursor-pointer">
+            <Link to="/dashboard">Dashboard</Link>
+          </li>
+          <li className="hover:underline cursor-pointer">
             <Link to="/about">About</Link>
           </li>
           <li className="hover:underline cursor-pointer">
@@ -46,6 +49,11 @@ const Navbar = () => {
           <li>
             <Link to="/" onClick={() => setIsOpen(false)}>
               Home
+            </Link>
+          </li>
+          <li>
+            <Link to="/dashboard" onClick={() => setIsOpen(false)}>
+              Dashboard
             </Link>
           </li>
           <li>

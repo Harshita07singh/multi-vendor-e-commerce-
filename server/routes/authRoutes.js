@@ -21,7 +21,7 @@ router.get(
   (req, res) => {
     const token = jwt.sign(
       { id: req.user._id, role: req.user.role },
-      process.env.JWT_SECRET,
+      process.env.JWT_ACCESS_SECRET,
       { expiresIn: "7d" },
     );
 

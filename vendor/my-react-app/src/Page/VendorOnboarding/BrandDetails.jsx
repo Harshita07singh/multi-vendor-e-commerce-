@@ -1,37 +1,94 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { saveVendorStep, getMyVendor } from "../../services/vendorService";
 
 const BrandDetails = () => {
   const [formData, setFormData] = useState({
     brandName: "",
-    brandRegistered: "",
+    brandType: "",
     trademarkNumber: "",
-    brandCategory: "",
     brandWebsite: "",
-    brandLogo: null,
   });
 
-  const handleChange = (e) => {
-    const { name, value, files } = e.target;
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-    if (name === "brandLogo") {
-      setFormData({
-        ...formData,
-        brandLogo: files[0],
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
+  // Load initial data from vendor profile
+  useEffect(() => {
+    const loadVendorData = async () => {
+      try {
+        const vendor = await getMyVendor();
+        if (vendor?.brandDetails) {
+          setFormData((prev) => ({
+            ...prev,
+            ...vendor.brandDetails,
+          }));
+        }
+      } catch (err) {
+        console.log("No existing vendor data found");
+      }
+    };
+
+    loadVendorData();
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+  };
+
+  // Auto-save when formData changes (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.brandName || formData.brandType) {
+        handleAutoSave();
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [formData]);
+
+  const handleAutoSave = async () => {
+    try {
+      setSaving(true);
+      setError("");
+      await saveVendorStep("brandDetails", formData);
+      setSuccess("Data saved successfully");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError(err.message || "Failed to save data");
+      console.error("Save error:", err);
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
     <>
-      <h1 className="text-3xl font-bold mb-2">Brand details</h1>
+      <h1 className="text-3xl font-bold mb-2">Brand Details</h1>
       <p className="text-gray-500 mb-8">
         Enter your brand and trademark information
       </p>
+
+      {/* Status Messages */}
+      {saving && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mb-4">
+          Saving...
+        </div>
+      )}
+      {success && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
+          {success}
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Brand Name */}
@@ -46,48 +103,27 @@ const BrandDetails = () => {
           />
         </div>
 
-        {/* Brand Registered */}
+        {/* Brand Type */}
         <div>
-          <label className="font-semibold block mb-2">
-            Is Brand Registered? *
-          </label>
-          <select
-            name="brandRegistered"
-            value={formData.brandRegistered}
-            onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
-          >
-            <option value="">Select</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-          </select>
-        </div>
-
-        {/* Trademark Number (Conditional) */}
-        {formData.brandRegistered === "Yes" && (
-          <div>
-            <label className="font-semibold block mb-2">
-              Trademark Number *
-            </label>
-            <input
-              type="text"
-              name="trademarkNumber"
-              value={formData.trademarkNumber}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-4 py-3"
-            />
-          </div>
-        )}
-
-        {/* Brand Category */}
-        <div>
-          <label className="font-semibold block mb-2">Brand Category *</label>
+          <label className="font-semibold block mb-2">Brand Type *</label>
           <input
             type="text"
-            name="brandCategory"
-            value={formData.brandCategory}
+            name="brandType"
+            value={formData.brandType}
             onChange={handleChange}
-            placeholder="Electronics, Fashion, Beauty..."
+            placeholder="Manufacturer, Distributor, etc."
+            className="w-full border rounded-lg px-4 py-3"
+          />
+        </div>
+
+        {/* Trademark Number */}
+        <div>
+          <label className="font-semibold block mb-2">Trademark Number</label>
+          <input
+            type="text"
+            name="trademarkNumber"
+            value={formData.trademarkNumber}
+            onChange={handleChange}
             className="w-full border rounded-lg px-4 py-3"
           />
         </div>
@@ -101,20 +137,6 @@ const BrandDetails = () => {
             value={formData.brandWebsite}
             onChange={handleChange}
             placeholder="https://example.com"
-            className="w-full border rounded-lg px-4 py-3"
-          />
-        </div>
-
-        {/* Brand Logo Upload */}
-        <div className="md:col-span-2">
-          <label className="font-semibold block mb-2">
-            Upload Brand Logo *
-          </label>
-          <input
-            type="file"
-            name="brandLogo"
-            accept=".jpg,.jpeg,.png,.svg"
-            onChange={handleChange}
             className="w-full border rounded-lg px-4 py-3"
           />
         </div>

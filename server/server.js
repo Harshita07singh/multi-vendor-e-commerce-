@@ -6,6 +6,7 @@ import "dotenv/config";
 import userAuthRoutes from "./routes/UserAuthRoutes.js";
 import adminRoutes from "./routes/AdminRoute.js";
 import vendorAuthRoutes from "./routes/authRoutes.js";
+import vendorRoutes from "./routes/vendorRoutes.js";
 import "./config/passport.js";
 import passport from "passport";
 
@@ -13,7 +14,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 await connectDB();
 
-const allwedOrigins = ["http://localhost:5173", "http://localhost:5174"];
+const allwedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+  "http://localhost:5176",
+];
 
 //middleware
 app.use(express.json());
@@ -25,6 +31,7 @@ app.use(passport.initialize());
 app.use("/api/auth", userAuthRoutes);
 app.use("/api/auth/vendor", vendorAuthRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/vendors", vendorRoutes);
 
 app.get("/", (req, res) => {
   res.send("server is running");
