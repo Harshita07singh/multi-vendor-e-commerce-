@@ -43,7 +43,7 @@ const MobileStepper = ({ steps, currentStep }) => {
       )}
 
       {/* Stepper */}
-      <div className="flex overflow-x-auto p-4 gap-4">
+      {/* <div className="flex overflow-x-auto p-4 gap-4">
         {steps.map((step, index) => (
           <div
             key={index}
@@ -57,7 +57,7 @@ const MobileStepper = ({ steps, currentStep }) => {
             <span className="text-sm">{step}</span>
           </div>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 };

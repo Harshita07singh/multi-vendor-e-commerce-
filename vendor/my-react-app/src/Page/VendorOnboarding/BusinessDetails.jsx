@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { saveVendorStep, getMyVendor } from "../../services/vendorService";
 
-const BusinessDetails = () => {
+const BusinessDetails = ({ setIsStepValid }) => {
   const [formData, setFormData] = useState({
     businessName: "",
     businessType: "",
@@ -21,6 +21,29 @@ const BusinessDetails = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const dropdownRef = useRef(null);
+
+  // Validate form fields
+  const validateForm = () => {
+    const isValid =
+      formData.businessName &&
+      formData.businessType &&
+      formData.gstNumber &&
+      formData.panNumber &&
+      formData.businessEmail &&
+      formData.businessPhone &&
+      formData.yearEstablished &&
+      formData.numberOfEmployees &&
+      formData.categories.length > 0 &&
+      formData.retailChannel;
+    return isValid;
+  };
+
+  // Update validation when formData changes
+  useEffect(() => {
+    if (setIsStepValid) {
+      setIsStepValid(validateForm());
+    }
+  }, [formData, setIsStepValid]);
 
   // Load initial data from vendor profile
   useEffect(() => {
@@ -231,7 +254,7 @@ const BusinessDetails = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
         {/* Business Name */}
         <div>
           <label className="font-semibold block mb-2">Business Name *</label>
@@ -240,18 +263,18 @@ const BusinessDetails = () => {
             name="businessName"
             value={formData.businessName}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
         {/* Business Type */}
         <div>
-          <label className="font-semibold block mb-2">Business Type *</label>
+          <label className="font-semibold block mb-2 ">Business Type *</label>
           <select
             name="businessType"
             value={formData.businessType}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           >
             <option value="">Select Type</option>
             <option value="Proprietorship">Proprietorship</option>
@@ -269,7 +292,7 @@ const BusinessDetails = () => {
             name="gstNumber"
             value={formData.gstNumber}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -281,7 +304,7 @@ const BusinessDetails = () => {
             name="panNumber"
             value={formData.panNumber}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -293,7 +316,7 @@ const BusinessDetails = () => {
             name="businessEmail"
             value={formData.businessEmail}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -305,7 +328,7 @@ const BusinessDetails = () => {
             name="businessPhone"
             value={formData.businessPhone}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -317,7 +340,7 @@ const BusinessDetails = () => {
             name="website"
             value={formData.website}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -329,7 +352,7 @@ const BusinessDetails = () => {
             name="yearEstablished"
             value={formData.yearEstablished}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -343,13 +366,13 @@ const BusinessDetails = () => {
             name="numberOfEmployees"
             value={formData.numberOfEmployees}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
         {/* Product Categories Dropdown */}
         <div className="relative md:col-span-2" ref={dropdownRef}>
-          <label className="font-semibold block mb-2">
+          <label className="font-semibold block mb-1">
             Product Categories (Max 10) *
           </label>
 
@@ -393,7 +416,7 @@ const BusinessDetails = () => {
             name="retailChannel"
             value={formData.retailChannel}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           >
             <option value="">Select Channel</option>
             <option value="Amazon">Amazon</option>

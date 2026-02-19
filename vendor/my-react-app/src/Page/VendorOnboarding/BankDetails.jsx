@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { saveVendorStep, getMyVendor } from "../../services/vendorService";
 
-const BankDetails = () => {
+const BankDetails = ({ setIsStepValid }) => {
   const [formData, setFormData] = useState({
     accountHolderName: "",
     accountNumber: "",
@@ -13,6 +13,24 @@ const BankDetails = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Validate form fields
+  const validateForm = () => {
+    const isValid =
+      formData.accountHolderName &&
+      formData.accountNumber &&
+      formData.ifscCode &&
+      formData.bankName &&
+      formData.branch;
+    return isValid;
+  };
+
+  // Update validation when formData changes
+  useEffect(() => {
+    if (setIsStepValid) {
+      setIsStepValid(validateForm());
+    }
+  }, [formData, setIsStepValid]);
 
   // Load initial data from vendor profile
   useEffect(() => {
@@ -102,7 +120,7 @@ const BankDetails = () => {
             name="accountHolderName"
             value={formData.accountHolderName}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -114,7 +132,7 @@ const BankDetails = () => {
             name="bankName"
             value={formData.bankName}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -126,7 +144,7 @@ const BankDetails = () => {
             name="accountNumber"
             value={formData.accountNumber}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -138,7 +156,7 @@ const BankDetails = () => {
             name="ifscCode"
             value={formData.ifscCode}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3 uppercase"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 uppercase focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -150,7 +168,7 @@ const BankDetails = () => {
             name="branch"
             value={formData.branch}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
       </div>

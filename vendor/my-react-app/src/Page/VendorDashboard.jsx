@@ -74,14 +74,15 @@ const VendorDashboard = () => {
           {/* <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
             Vendor Dashboard
           </h1> */}
-          {vendor && vendor.status !== "approved" && (
+
+          {/* {vendor && vendor.status !== "approved" && (
             <button
               onClick={handleEditProfile}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition"
             >
               {vendor.status === "draft" ? "Complete Profile" : "Edit Profile"}
             </button>
-          )}
+          )} */}
         </div>
 
         {/* Error Alert */}

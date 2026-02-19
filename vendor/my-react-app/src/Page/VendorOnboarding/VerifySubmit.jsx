@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { submitVendor, getMyVendor } from "../../services/vendorService";
 
-const VerifySubmit = () => {
+const VerifySubmit = ({ setIsStepValid }) => {
   const [vendor, setVendor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [confirmSubmit, setConfirmSubmit] = useState(false);
+
+  // Update validation when confirmSubmit changes
+  useEffect(() => {
+    if (setIsStepValid) {
+      setIsStepValid(confirmSubmit === true);
+    }
+  }, [confirmSubmit, setIsStepValid]);
 
   // Load vendor data on mount
   useEffect(() => {
@@ -243,10 +250,13 @@ const VerifySubmit = () => {
               type="checkbox"
               checked={confirmSubmit}
               onChange={(e) => setConfirmSubmit(e.target.checked)}
-              className="mt-1"
+              className="mt-1 w-4 h-4 border border-gray-300 rounded focus:ring-2 focus:ring-[#299E60] cursor-pointer accent-[#299E60]"
               id="confirmCheckbox"
             />
-            <label htmlFor="confirmCheckbox" className="text-sm text-gray-700">
+            <label
+              htmlFor="confirmCheckbox"
+              className="text-sm text-gray-700 cursor-pointer"
+            >
               I confirm that all information provided above is true, accurate,
               and complete. I understand that providing false information may
               result in rejection of my application or account termination in
@@ -261,7 +271,7 @@ const VerifySubmit = () => {
           className={`w-full py-3 rounded-lg text-white font-semibold ${
             submitting || !confirmSubmit
               ? "bg-gray-400 cursor-not-allowed"
-              : "bg-green-600 hover:bg-green-700"
+              : "bg-[#299E60] hover:bg-[#207a4a] transition"
           }`}
         >
           {submitting ? "Submitting..." : "Submit Application"}

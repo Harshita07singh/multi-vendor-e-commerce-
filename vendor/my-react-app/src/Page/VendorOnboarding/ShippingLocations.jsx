@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { saveVendorStep, getMyVendor } from "../../services/vendorService";
 
-const ShippingLocations = () => {
+const ShippingLocations = ({ setIsStepValid }) => {
   const [formData, setFormData] = useState({
     warehouseAddress: "",
     city: "",
@@ -12,6 +12,23 @@ const ShippingLocations = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Validate form fields
+  const validateForm = () => {
+    const isValid =
+      formData.warehouseAddress &&
+      formData.city &&
+      formData.state &&
+      formData.pincode;
+    return isValid;
+  };
+
+  // Update validation when formData changes
+  useEffect(() => {
+    if (setIsStepValid) {
+      setIsStepValid(validateForm());
+    }
+  }, [formData, setIsStepValid]);
 
   // Load initial data from vendor profile
   useEffect(() => {
@@ -100,7 +117,7 @@ const ShippingLocations = () => {
             name="warehouseAddress"
             value={formData.warehouseAddress}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -112,7 +129,7 @@ const ShippingLocations = () => {
             name="city"
             value={formData.city}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -124,7 +141,7 @@ const ShippingLocations = () => {
             name="state"
             value={formData.state}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -137,7 +154,7 @@ const ShippingLocations = () => {
             value={formData.pincode}
             onChange={handleChange}
             maxLength="6"
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
       </div>

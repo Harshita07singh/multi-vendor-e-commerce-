@@ -8,10 +8,7 @@ const SidebarStepper = ({ steps, currentStep }) => {
   const handleLogout = async () => {
     try {
       await axios.post("/api/auth/logout", {}, { withCredentials: true });
-
-      // Clear local storage if storing accessToken
       localStorage.removeItem("accessToken");
-
       navigate("/");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -19,30 +16,15 @@ const SidebarStepper = ({ steps, currentStep }) => {
   };
 
   return (
-    <div className="space-y-6">
-      {steps.map((step, index) => (
-        <div key={index} className="flex items-center gap-3">
-          <div
-            className={`w-5 h-5 rounded-full border-2 ${
-              index === currentStep
-                ? "bg-green-400 border-green-400"
-                : "border-gray-400"
-            }`}
-          ></div>
-          <span
-            className={`${
-              index === currentStep ? "font-semibold" : "text-gray-300"
-            }`}
-          >
-            {step}
-          </span>
-        </div>
-      ))}
+    <div className="flex flex-col justify-between text-white h-full">
+      {/* Steps Section */}
+      <div className="space-y-4">{/* Steps will be rendered here */}</div>
 
-      <div className="px-6 mt-10">
+      {/* 🔴 Logout */}
+      <div className="mt-auto">
         <button
           onClick={handleLogout}
-          className="w-full bg-red-400 hover:bg-red-600 text-white py-2 rounded-lg"
+          className="w-full bg-red-500 hover:bg-red-600 transition-all duration-200 text-white py-2 rounded-lg font-semibold shadow-md"
         >
           Logout
         </button>

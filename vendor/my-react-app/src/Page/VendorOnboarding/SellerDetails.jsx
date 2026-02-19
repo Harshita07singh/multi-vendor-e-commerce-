@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { saveVendorStep, getMyVendor } from "../../services/vendorService";
 
-const SellerDetails = () => {
+const SellerDetails = ({ setIsStepValid }) => {
   const [formData, setFormData] = useState({
     sellerName: "",
     sellerEmail: "",
@@ -15,6 +15,26 @@ const SellerDetails = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Validate form fields
+  const validateForm = () => {
+    const isValid =
+      formData.sellerName &&
+      formData.sellerEmail &&
+      formData.sellerPhone &&
+      formData.address &&
+      formData.city &&
+      formData.state &&
+      formData.pincode;
+    return isValid;
+  };
+
+  // Update validation when formData changes
+  useEffect(() => {
+    if (setIsStepValid) {
+      setIsStepValid(validateForm());
+    }
+  }, [formData, setIsStepValid]);
 
   // Load initial data from vendor profile
   useEffect(() => {
@@ -102,7 +122,7 @@ const SellerDetails = () => {
             name="sellerName"
             value={formData.sellerName}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -114,7 +134,7 @@ const SellerDetails = () => {
             name="sellerEmail"
             value={formData.sellerEmail}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -126,7 +146,7 @@ const SellerDetails = () => {
             name="sellerPhone"
             value={formData.sellerPhone}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -138,7 +158,7 @@ const SellerDetails = () => {
             name="address"
             value={formData.address}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -150,7 +170,7 @@ const SellerDetails = () => {
             name="city"
             value={formData.city}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -162,7 +182,7 @@ const SellerDetails = () => {
             name="state"
             value={formData.state}
             onChange={handleChange}
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
 
@@ -175,7 +195,7 @@ const SellerDetails = () => {
             value={formData.pincode}
             onChange={handleChange}
             maxLength="6"
-            className="w-full border rounded-lg px-4 py-3"
+            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
         </div>
       </div>

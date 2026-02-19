@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { saveVendorStep, getMyVendor } from "../../services/vendorService";
 
-const DigitalSignature = () => {
+const DigitalSignature = ({ setIsStepValid }) => {
   const [formData, setFormData] = useState({
     signed: false,
   });
@@ -9,6 +9,18 @@ const DigitalSignature = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Validate form fields
+  const validateForm = () => {
+    return formData.signed === true;
+  };
+
+  // Update validation when formData changes
+  useEffect(() => {
+    if (setIsStepValid) {
+      setIsStepValid(validateForm());
+    }
+  }, [formData, setIsStepValid]);
 
   // Load initial data from vendor profile
   useEffect(() => {
@@ -103,9 +115,9 @@ const DigitalSignature = () => {
           name="signed"
           checked={formData.signed}
           onChange={handleChange}
-          className="mt-1"
+          className="mt-1 w-4 h-4 border border-gray-300 rounded focus:ring-2 focus:ring-[#299E60] cursor-pointer accent-[#299E60]"
         />
-        <label className="text-sm text-gray-700">
+        <label className="text-sm text-gray-700 cursor-pointer">
           I confirm that all the information provided is accurate and correct. I
           understand that submitting false information may result in rejection
           of my application.

@@ -10,13 +10,17 @@ import { Routes, Route } from "react-router-dom";
 import LoginSuccess from "./Page/LoginSuccess";
 import VendorOnboarding from "./Page/VendorOnboarding/VendorOnboarding";
 import VendorDashboard from "./Page/VendorDashboard";
+import { useLocation } from "react-router-dom";
 
 function MainLayout() {
+  const location = useLocation();
+
+  const hideFooter = location.pathname === "/vendor/onboarding";
   return (
     <>
       <Navbar />
       <Outlet />
-      <Footer />
+      {!hideFooter && <Footer />}
     </>
   );
 }
@@ -29,10 +33,10 @@ function App() {
         <Route path="/" element={<Hero />} />
         <Route path="/login-success" element={<LoginSuccess />} />
         <Route path="/dashboard" element={<VendorDashboard />} />
+        <Route path="/vendor/onboarding" element={<VendorOnboarding />} />
       </Route>
 
       {/* Onboarding route without main layout */}
-      <Route path="/vendor/onboarding" element={<VendorOnboarding />} />
     </Routes>
   );
 }

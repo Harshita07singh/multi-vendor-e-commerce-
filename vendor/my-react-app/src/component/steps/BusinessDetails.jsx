@@ -78,7 +78,7 @@ const BusinessDetails = ({ data, onSave, onNext }) => {
     defaultValues: data || {},
   });
 
-  // ✅ ADD THIS FUNCTION
+  //  ADD THIS FUNCTION
   const onSubmit = (formData) => {
     const finalData = {
       ...formData,
@@ -99,7 +99,7 @@ const BusinessDetails = ({ data, onSave, onNext }) => {
 
         <input
           type="text"
-          className="w-full pl-4 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2"
+          className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           placeholder="Search your product & category"
         />
 
@@ -128,7 +128,7 @@ const BusinessDetails = ({ data, onSave, onNext }) => {
           {...register("retailChannel", {
             required: "Retail channel is required",
           })}
-          className="w-full px-4 py-3 border rounded-lg focus:ring-2"
+          className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
         >
           <option value="">Select channel</option>
           <option value="amazon">Amazon</option>
