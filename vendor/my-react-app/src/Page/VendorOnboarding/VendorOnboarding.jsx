@@ -290,11 +290,11 @@ const VendorOnboarding = () => {
               </button>
             )}
 
-            {currentStep === steps.length - 1 && (
+            {/* {currentStep === steps.length - 1 && (
               <button className="px-8 py-3 rounded-lg font-semibold bg-[#299E60] hover:bg-[#207a4a] text-white shadow-sm transition-all duration-200">
                 Submit
               </button>
-            )}
+            )} */}
           </div>
         </div>
       )}

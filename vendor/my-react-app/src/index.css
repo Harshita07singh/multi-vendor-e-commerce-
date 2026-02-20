@@ -42,3 +42,42 @@ body {
 .glow-dot {
   animation: glowPulse 2s infinite ease-in-out;
 }
+/* 🔥 Glow Text Effect */
+.glow-text {
+  background: linear-gradient(90deg, #299e60, #34d399, #299e60);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: glowMove 3s linear infinite;
+}
+
+@keyframes glowMove {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* Soft glow shadow */
+.soft-glow {
+  text-shadow: 0 0 15px rgba(12, 66, 38, 0.4);
+}
+
+/* Floating animation */
+.float-animation {
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}

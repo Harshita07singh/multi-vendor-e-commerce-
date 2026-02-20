@@ -5,15 +5,15 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="w-full fixed top-0 left-0 bg-[#299E60]  text-white shadow-md z-50">
+    <nav className="w-full fixed top-0 h-15 left-0 bg-[#299E60]  text-white shadow-md z-50">
       <div className="max-w-7xl mx-auto px-6 md:px-16 py-3 flex justify-between items-center">
         {/* Logo */}
-        <div className="text-xl font-bold">
-          seller hub <span className="text-sm font-normal">by 3arrow</span>
+        <div className="text-2xl font-bold">
+          seller hub <span className="text-lg  font-extrabold">by 3arrow</span>
         </div>
 
         {/* Desktop Menu */}
-        <ul className="hidden md:flex gap-8 font-medium">
+        <ul className="hidden md:flex gap-8 text-lg font-medium">
           <li className="hover:underline cursor-pointer">
             <Link to="/">Home</Link>
           </li>
