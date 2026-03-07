@@ -1,5 +1,8 @@
 import Vendor from "../models/Vendor.js";
 import User from "../models/User.js";
+import Product from "../models/Product.js";
+import Category from "../models/Category.js";
+import SubCategory from "../models/SubCategory.js";
 
 //  Get all vendors (Admin)
 export const getAllVendors = async (req, res) => {
@@ -156,5 +159,89 @@ export const updateVendorStatus = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get vendor's products
+export const getMyVendorProducts = async (req, res) => {
+  try {
+    const { page = 1, limit = 12, category, subCategory, search } = req.query;
+    const vendor = await Vendor.findOne({ userId: req.user.id });
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor profile not found" });
+    }
+
+    const query = {
+      vendor: vendor._id,
+      isDeleted: false,
+    };
+
+    if (category) query.category = category;
+    if (subCategory) query.subCategory = subCategory;
+    if (search) query.$text = { $search: search };
+
+    const products = await Product.find(query)
+      .populate("category", "name slug")
+      .populate("subCategory", "name slug")
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .sort({ createdAt: -1 });
+
+    const total = await Product.countDocuments(query);
+    const pages = Math.ceil(total / limit);
+
+    res.json({
+      products,
+      total,
+      page: Number(page),
+      pages,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get vendor's categories
+export const getMyVendorCategories = async (req, res) => {
+  try {
+    const vendor = await Vendor.findOne({ userId: req.user.id });
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor profile not found" });
+    }
+
+    const categories = await Category.find({
+      vendor: vendor._id,
+      isActive: true,
+    }).sort({ createdAt: -1 });
+
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get vendor's subcategories
+export const getMyVendorSubCategories = async (req, res) => {
+  try {
+    const { category } = req.query;
+    const vendor = await Vendor.findOne({ userId: req.user.id });
+    if (!vendor) {
+      return res.status(404).json({ message: "Vendor profile not found" });
+    }
+
+    const query = {
+      vendor: vendor._id,
+      isActive: true,
+    };
+
+    if (category) query.category = category;
+
+    const subCategories = await SubCategory.find(query)
+      .populate("category", "name slug")
+      .sort({ createdAt: -1 });
+
+    res.json(subCategories);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

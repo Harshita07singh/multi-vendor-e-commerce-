@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 ac99760b6f22d01407a6099fea400b34ade4b725 harshita singh <harshi07singh@gmail.com> 1771651508 +0530	commit (initial): this is the server
+ac99760b6f22d01407a6099fea400b34ade4b725 ac99760b6f22d01407a6099fea400b34ade4b725 harshita singh <harshi07singh@gmail.com> 1771652583 +0530	Branch: renamed refs/heads/master to refs/heads/main
+ac99760b6f22d01407a6099fea400b34ade4b725 f892045040c0d573d17f66485c9ebaec6a5b39aa harshita singh <harshi07singh@gmail.com> 1772017631 +0530	commit: catagories functionalities
+f892045040c0d573d17f66485c9ebaec6a5b39aa 9abb63d3851760cba49d2526ee99d7882809691b harshita singh <harshi07singh@gmail.com> 1772109804 +0530	commit: product and catagory update
+9abb63d3851760cba49d2526ee99d7882809691b db831715ef8fd07f46b763a436be3c603e56e16d harshita singh <harshi07singh@gmail.com> 1772260760 +0530	commit: add to cart update
+db831715ef8fd07f46b763a436be3c603e56e16d 782079bf24b520d1642d3eab809ce126059cb367 harshita singh <harshi07singh@gmail.com> 1772540484 +0530	commit: added the coupon and other functionalities

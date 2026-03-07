@@ -1,5 +1,5 @@
 // Vendor API Service
-const API_BASE_URL = "/api/vendors";
+const API_BASE_URL = "/api/auth/vendor";
 
 // Get auth token from localStorage
 const getAuthHeader = () => {
@@ -41,7 +41,7 @@ export const saveVendorStep = async (step, data) => {
   }
 };
 
-// Get vendor profile
+// Get vendor profile (creates one if it doesn't exist for new users)
 export const getMyVendor = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/my-profile`, {
@@ -55,6 +55,19 @@ export const getMyVendor = async () => {
 
     const result = await response.json();
 
+    // Handle 401 - User not authenticated
+    if (response.status === 401) {
+      console.log("User not authenticated");
+      return null;
+    }
+
+    // If vendor not found (404), return null instead of throwing error
+    // This allows new users to start the onboarding process
+    if (response.status === 404) {
+      console.log("No vendor profile found, user needs to start onboarding");
+      return null;
+    }
+
     if (!response.ok) {
       throw new Error(result.message || "Failed to fetch vendor profile");
     }
@@ -62,7 +75,9 @@ export const getMyVendor = async () => {
     return result;
   } catch (error) {
     console.error("Error fetching vendor profile:", error);
-    throw error;
+    // Return null instead of throwing for network errors
+    // This prevents the app from crashing on minor network issues
+    return null;
   }
 };
 

@@ -7,6 +7,8 @@ import {
   verifyOtp,
   requestPasswordReset,
   resetPassword,
+  getMe,
+  updateProfile,
 } from "../controllers/UserController.js";
 import { refreshAccessToken } from "../utils/generateToken.js";
 import { approveUser } from "../controllers/UserController.js";
@@ -23,7 +25,13 @@ router.post("/verify-otp", verifyOtp);
 router.post("/request-password-reset", requestPasswordReset);
 router.post("/reset-password/:token", resetPassword);
 
-// Example protected routes
+// ✅ NEW: Profile route - login hona zaroori hai
+router.get("/me", protect, getMe);
+
+// ✅ NEW: Update profile route
+router.put("/update-profile", protect, updateProfile);
+
+// Protected routes
 router.get(
   "/admin-dashboard",
   protect,

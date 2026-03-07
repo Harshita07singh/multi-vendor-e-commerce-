@@ -251,3 +251,70 @@ export const resetPassword = async (req, res) => {
     return handleError(error, res);
   }
 };
+
+export const getMe = async (req, res) => {
+  try {
+    // req.user authMiddleware ke protect se aata hai
+    const user = await User.findById(req.user.id).select(
+      "-password -refreshToken -resetPasswordToken -resetPasswordExpires",
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        status: user.status,
+        isApproved: user.isApproved,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    return handleError(error, res);
+  }
+};
+
+// UPDATE PROFILE
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    const userId = req.user.id;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Update fields
+    if (name) user.name = name;
+    if (phone) user.phone = phone;
+
+    await user.save();
+
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        status: user.status,
+        isApproved: user.isApproved,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    return handleError(error, res);
+  }
+};

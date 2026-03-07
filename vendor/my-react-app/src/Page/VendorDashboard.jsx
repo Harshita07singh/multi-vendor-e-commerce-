@@ -356,10 +356,10 @@ const VendorDashboard = () => {
 
                 {vendor.status === "approved" && (
                   <button
-                    disabled
-                    className="flex-1 px-6 py-2 bg-green-600 text-white rounded-lg font-semibold cursor-not-allowed"
+                    onClick={() => navigate("/product/home")}
+                    className="flex-1 px-6 py-2 bg-green-600 text-white rounded-lg font-semibold transition"
                   >
-                    ✓ Approved
+                    Proceed
                   </button>
                 )}
               </div>

@@ -1,0 +1,16 @@
+@import "tailwindcss";
+.input {
+  @apply w-full p-3 rounded-xl bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2 focus:ring-white transition;
+}
+
+.primary-btn {
+  @apply w-full bg-white text-green-700 font-semibold py-3 rounded-xl hover:scale-105 transition-transform duration-300 shadow-lg;
+}
+
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 10px;
+}

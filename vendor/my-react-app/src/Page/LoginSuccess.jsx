@@ -12,7 +12,6 @@ const LoginSuccess = () => {
     if (token) {
       // Store token
       localStorage.setItem("accessToken", token);
-
       // Fetch user data (optional - if backend returns it in Google response)
       // For now, we'll just show success and redirect
 

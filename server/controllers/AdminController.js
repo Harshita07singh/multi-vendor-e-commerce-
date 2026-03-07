@@ -109,3 +109,60 @@ export const deleteAdmin = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Get pending deliveries
+export const getPendingDeliveries = async (req, res) => {
+  try {
+    const deliveries = await User.find({
+      role: "delivery",
+      isApproved: false,
+    }).select("-password");
+
+    res.json({
+      total: deliveries.length,
+      deliveries,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Approve delivery partner
+export const approveDelivery = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const delivery = await User.findById(id);
+
+    if (!delivery || delivery.role !== "delivery") {
+      return res.status(404).json({ message: "Delivery partner not found" });
+    }
+
+    delivery.isApproved = true;
+    delivery.status = "active";
+    await delivery.save();
+
+    res.json({ message: "Delivery partner approved successfully", delivery });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Reject delivery partner
+export const rejectDelivery = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const delivery = await User.findById(id);
+
+    if (!delivery || delivery.role !== "delivery") {
+      return res.status(404).json({ message: "Delivery partner not found" });
+    }
+
+    await delivery.deleteOne();
+
+    res.json({ message: "Delivery partner rejected successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
