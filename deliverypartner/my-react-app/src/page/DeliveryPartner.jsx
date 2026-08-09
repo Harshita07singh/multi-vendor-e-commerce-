@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Arrow from "../assets/3arrow.png";
+import banner from "../assets/Delivery Banner.webp";
+import { User } from "lucide-react";
 
 const STEPS = [
-  { id: 1, label: "Personal", icon: "👤" },
+  { id: 1, label: "Personal", icon: <User /> },
   { id: 2, label: "Documents", icon: "🪪" },
   { id: 3, label: "Vehicle", icon: "🛵" },
   { id: 4, label: "Bank", icon: "🏦" },
@@ -19,9 +22,8 @@ const DeliveryPartner = () => {
   const [files, setFiles] = useState({});
 
   const [emailOTPVerified, setEmailOTPVerified] = useState(false);
-  const [phoneOTPVerified, setPhoneOTPVerified] = useState(false);
-  const [otpSent, setOtpSent] = useState({ email: false, phone: false });
-  const [otpLoading, setOtpLoading] = useState({ email: false, phone: false });
+  const [otpSent, setOtpSent] = useState({ email: false });
+  const [otpLoading, setOtpLoading] = useState({ email: false });
   const [otp, setOtp] = useState("");
 
   const showMsg = (text, type = "error") => {
@@ -85,53 +87,6 @@ const DeliveryPartner = () => {
     }
   };
 
-  const handleSendPhoneOTP = async () => {
-    if (!formData.phone) {
-      showMsg("Please enter your phone number first");
-      return;
-    }
-    setOtpLoading({ ...otpLoading, phone: true });
-    setMessage("");
-    try {
-      const res = await fetch("/api/auth/delivery/send-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: formData.phone }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setOtpSent({ ...otpSent, phone: true });
-        showMsg("OTP sent to your phone!", "success");
-      } else showMsg(data.message || "Failed to send OTP");
-    } catch {
-      showMsg("Error sending OTP");
-    } finally {
-      setOtpLoading({ ...otpLoading, phone: false });
-    }
-  };
-
-  const handleVerifyPhoneOTP = async () => {
-    if (!otp) {
-      showMsg("Please enter the OTP");
-      return;
-    }
-    try {
-      const res = await fetch("/api/auth/delivery/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: formData.phone, otp }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setPhoneOTPVerified(true);
-        setOtpSent({ ...otpSent, phone: false });
-        showMsg("Phone verified!", "success");
-      } else showMsg(data.message || "Invalid OTP");
-    } catch {
-      showMsg("Error verifying OTP");
-    }
-  };
-
   const handleLogin = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -158,10 +113,6 @@ const DeliveryPartner = () => {
     setMessage("");
     if (!emailOTPVerified) {
       showMsg("Please verify your email with OTP first");
-      return;
-    }
-    if (!phoneOTPVerified) {
-      showMsg("Please verify your phone number with OTP first");
       return;
     }
     const data = new FormData();
@@ -195,7 +146,6 @@ const DeliveryPartner = () => {
         return (
           formData.name &&
           formData.phone &&
-          phoneOTPVerified &&
           formData.email &&
           emailOTPVerified &&
           formData.password &&
@@ -203,7 +153,6 @@ const DeliveryPartner = () => {
           formData.gender &&
           formData.city
         );
-
       case 2:
         return (
           formData.aadhaarNumber &&
@@ -216,7 +165,6 @@ const DeliveryPartner = () => {
           files.dlFront &&
           files.dlBack
         );
-
       case 3:
         return (
           formData.vehicleType &&
@@ -225,7 +173,6 @@ const DeliveryPartner = () => {
           formData.vehicleYear &&
           files.rcImage
         );
-
       case 4:
         return (
           formData.accountHolderName &&
@@ -235,11 +182,11 @@ const DeliveryPartner = () => {
           files.bankProofImage &&
           formData.termsAccepted
         );
-
       default:
         return false;
     }
   };
+
   return (
     <>
       <style>{`
@@ -247,426 +194,261 @@ const DeliveryPartner = () => {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         .dp-root {
-          height: 100vh;
+          height: 100vh; width: 100vw;
           display: flex;
           font-family: 'Plus Jakarta Sans', sans-serif;
-          background: #060d04;
           overflow: hidden;
+          background: #f0f4ef;
         }
 
-        /* LEFT */
+        /* ══════════════════════════════════
+           LEFT — full-height split banner
+        ══════════════════════════════════ */
         .dp-left {
-          display: none;
-          width: 44%;
+          width: 55%;
+          flex-shrink: 0;
           position: relative;
           overflow: hidden;
         }
-        @media (min-width: 1024px) { .dp-left { display: flex; flex-direction: column; } }
 
+        /* Banner image fills the whole panel */
         .dp-left-img {
           position: absolute; inset: 0;
           width: 100%; height: 100%;
           object-fit: cover;
-          filter: brightness(0.38) saturate(1.1);
+          object-position: center center;
+          display: block;
         }
 
+        /* Dark gradient only at the top so text pops */
         .dp-left-overlay {
           position: absolute; inset: 0;
-          background: linear-gradient(160deg, rgba(4,28,4,0.5) 0%, rgba(6,13,4,0.88) 100%);
+          background: linear-gradient(
+            175deg,
+            rgba(5, 20, 5, 0.72) 0%,
+            rgba(5, 20, 5, 0.38) 38%,
+            rgba(5, 20, 5, 0.0) 62%
+          );
+          pointer-events: none;
         }
 
-        .dp-left-content {
-          position: relative; z-index: 2;
-          display: flex; flex-direction: column;
-          justify-content: flex-end;
-          height: 100%;
-          padding: 48px 44px;
-          gap: 20px;
+        /* ── Overlay text block — top-left ── */
+        .dp-left-text {
+          position: absolute;
+          top: 60px; left: 36px; right: 36px;
+          z-index: 2;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
         }
 
+        /* "Now Hiring" pill */
         .dp-pill {
-          display: inline-flex; align-items: center; gap: 8px;
-          background: rgba(74,222,128,0.12);
-          border: 1px solid rgba(74,222,128,0.3);
+          display: inline-flex; align-items: center; gap: 7px;
+          background: rgba(74, 222, 128, 0.14);
+          border: 1px solid rgba(74, 222, 128, 0.38);
           border-radius: 100px;
           padding: 5px 14px;
-          font-size: 11px; font-weight: 700;
-          color: #4ade80; letter-spacing: 0.08em;
-          text-transform: uppercase; width: fit-content;
+          width: fit-content;
         }
-
         .dp-pill-dot {
           width: 6px; height: 6px; border-radius: 50%;
           background: #4ade80;
-          animation: blink 2s ease-in-out infinite;
+          animation: dp-blink 2s ease-in-out infinite;
         }
+        .dp-pill-label {
+          font-size: 10px; font-weight: 700;
+          color: #4ade80; letter-spacing: 0.1em; text-transform: uppercase;
+        }
+        @keyframes dp-blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
 
-        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
-
-        .dp-left-title {
-          font-size: clamp(28px, 2.8vw, 46px);
+        /* Headline */
+        .dp-headline {
+          font-size: clamp(24px, 2.8vw, 42px);
           font-weight: 800; line-height: 1.08;
-          color: #f0fdf0; letter-spacing: -0.03em;
+          color: #ffffff; letter-spacing: -0.03em;
+        }
+        .dp-headline em {
+          font-style: normal; color: #5CB74D;
         }
 
-        .dp-left-title em {
-          font-style: normal;
-          background: linear-gradient(90deg, #4ade80, #a3e6b0);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+        /* Subtext */
+        .dp-desc {
+          font-size: 13px; line-height: 1.68;
+          color: rgba(255, 255, 255, 0.68);
+          max-width: 300px;
         }
 
-        .dp-left-desc {
-          font-size: 13.5px; line-height: 1.65;
-          color: rgba(200,230,200,0.5);
-          max-width: 290px;
-        }
-
+        /* Stats */
         .dp-stats {
-          display: flex; gap: 28px;
-          padding-top: 20px;
-          border-top: 1px solid rgba(74,222,128,0.12);
+          display: flex; gap: 24px;
+          padding-top: 14px;
+          border-top: 1px solid rgba(255,255,255,0.14);
         }
+        .dp-stat-n { font-size: 20px; font-weight: 800; color: #5CB74D; }
+        .dp-stat-l { font-size: 10px; font-weight: 500; color:#5CB74D; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
 
-        .dp-stat-n { font-size: 21px; font-weight: 800; color: #f0fdf0; letter-spacing: -0.02em; }
-        .dp-stat-l { font-size: 10.5px; font-weight: 500; color: rgba(150,180,150,0.45); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
-
-        /* RIGHT */
+        /* ══════════════════════════════════
+           RIGHT — scrollable form panel
+        ══════════════════════════════════ */
         .dp-right {
-          flex: 1;
-          display: flex;
-          align-items: stretch;
-          padding: 18px;
-          background: #f0f4ef;
-          overflow: hidden;
-        }
-
-        /* CARD — flex column, fixed height */
-        .dp-card {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
+          flex: 1; min-width: 0;
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          padding: 20px 24px;
+          overflow-y: auto;
           background: #fff;
-          border-radius: 26px;
-          box-shadow: 0 0 0 1px rgba(0,0,0,0.04), 0 20px 60px rgba(0,0,0,0.09);
+        }
+
+        .dp-card {
+          width: 100%; max-width: 440px;
+          display: flex; flex-direction: column;
+          background: #fff; 
+        
           overflow: hidden;
         }
 
-        /* HEADER — never shrinks */
-        .dp-header {
-          flex-shrink: 0;
-          padding: 26px 30px 14px;
-          border-bottom: 1px solid #f0f4ef;
-        }
+        .dp-header { flex-shrink: 0; padding: 24px 28px 14px; border-bottom: 1px solid #f0f4ef; }
+        .dp-logo { display: flex; align-items: center; margin-bottom: 16px; }
+        .dp-logo img { height: 50px; width: auto; object-fit: contain; display: block; }
+        .dp-heading { font-size: 30px; font-weight: 800; color: #5CB74D; letter-spacing: -0.02em; margin-bottom: 2px; }
+        .dp-sub { font-size: 16px; color: #9aaa96; margin-bottom: 10px; }
 
-        .dp-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
-
-        .dp-logo-mark {
-          width: 32px; height: 32px; border-radius: 9px;
-          background: linear-gradient(135deg, #15803d, #4ade80);
-          display: flex; align-items: center; justify-content: center;
-          font-size: 15px;
-        }
-
-        .dp-logo-name { font-size: 16px; font-weight: 800; color: #0d1f09; letter-spacing: -0.02em; }
-
-        .dp-heading { font-size: 19px; font-weight: 800; color: #0d1f09; letter-spacing: -0.02em; margin-bottom: 2px; }
-        .dp-sub { font-size: 12px; color: #9aaa96; margin-bottom: 10px; }
-
-        /* STEP TRACK */
         .dp-steps { display: flex; gap: 6px; }
-
         .dp-step-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-
-        .dp-step-track {
-          width: 100%; height: 3px; border-radius: 10px;
-          background: #e8ede6;
-          transition: background 0.35s;
-        }
-
+        .dp-step-track { width: 100%; height: 3px; border-radius: 10px; background: #e8ede6; transition: background 0.35s; }
         .dp-step-item.active .dp-step-track,
-        .dp-step-item.done .dp-step-track {
-          background: linear-gradient(90deg, #15803d, #4ade80);
-        }
-
-        .dp-step-name {
-          font-size: 9px; font-weight: 700;
-          text-transform: uppercase; letter-spacing: 0.07em;
-          color: #c5cec3; transition: color 0.3s;
-        }
-
+        .dp-step-item.done .dp-step-track { background: linear-gradient(90deg, #15803d, #4ade80); }
+        .dp-step-name { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #c5cec3; transition: color 0.3s; }
         .dp-step-item.active .dp-step-name { color: #15803d; }
         .dp-step-item.done .dp-step-name { color: #4ade80; }
 
-        /* ALERT */
-        .dp-alert {
-          padding: 8px 12px; border-radius: 10px;
-          font-size: 12px; font-weight: 600;
-          margin-bottom: 0; margin-top: 10px;
-        }
-
+        .dp-alert { padding: 8px 12px; border-radius: 10px; font-size: 12px; font-weight: 600; margin-top: 10px; }
         .dp-alert.error { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
         .dp-alert.success { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; }
 
-        /* BODY — fills remaining space, NO overflow */
-        .dp-body {
-          flex: 1;
-          padding: 16px 30px;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-        }
+        .dp-body { padding: 14px 28px; display: flex; flex-direction: column; }
+        .dp-step-panel { display: flex; flex-direction: column; gap: 9px; animation: fadeIn 0.22s ease; }
+        @keyframes fadeIn { from{opacity:0;transform:translateX(10px);}to{opacity:1;transform:translateX(0);} }
 
-        /* STEP PANEL */
-        .dp-step-panel {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 9px;
-          animation: fadeIn 0.22s ease;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateX(10px); }
-          to   { opacity: 1; transform: translateX(0); }
-        }
-
-        .dp-panel-title {
-          font-size: 12.5px; font-weight: 700;
-          color: #2d4a28; letter-spacing: -0.01em;
-          display: flex; align-items: center; gap: 7px;
-          padding-bottom: 8px;
-          border-bottom: 1px solid #edf0eb;
-          flex-shrink: 0;
-        }
-
-        /* GRID */
-        .dp-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 8px;
-          flex: 1;
-          align-content: start;
-        }
-
+        .dp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start; }
         .dp-span2 { grid-column: span 2; }
 
-        /* INPUT */
         .dp-input {
-          width: 100%;
-          padding: 9px 12px;
-          font-size: 12.5px;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          color: #1a2e15;
-          background: #f8faf7;
-          border: 1.5px solid #e2e8df;
-          border-radius: 10px;
-          outline: none;
-          transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+          width: 100%; padding: 9px 12px; font-size: 12.5px;
+          font-family: 'Plus Jakarta Sans', sans-serif; color: #1a2e15;
+          background: #f8faf7; border: 1.5px solid #e2e8df; border-radius: 10px;
+          outline: none; transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
         }
-
         .dp-input::placeholder { color: #b8c5b5; }
+        .dp-input:focus { border-color: #4ade80; background: #fff; box-shadow: 0 0 0 3px rgba(74,222,128,0.12); }
 
-        .dp-input:focus {
-          border-color: #4ade80;
-          background: #fff;
-          box-shadow: 0 0 0 3px rgba(74,222,128,0.12);
-        }
-
-        /* SELECT */
         .dp-select {
-          width: 100%;
-          padding: 9px 12px;
-          font-size: 12.5px;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          color: #1a2e15;
-          background: #f8faf7;
-          border: 1.5px solid #e2e8df;
-          border-radius: 10px;
+          width: 100%; padding: 9px 12px; font-size: 12.5px;
+          font-family: 'Plus Jakarta Sans', sans-serif; color: #1a2e15;
+          background: #f8faf7; border: 1.5px solid #e2e8df; border-radius: 10px;
           outline: none; appearance: none; cursor: pointer;
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7' viewBox='0 0 12 7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239aaa96' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-          background-repeat: no-repeat;
-          background-position: right 13px center;
+          background-repeat: no-repeat; background-position: right 13px center;
           transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .dp-btn-next:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-        .dp-select:focus {
-          border-color: #4ade80;
-          box-shadow: 0 0 0 3px rgba(74,222,128,0.12);
-        }
+        .dp-select:focus { border-color: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,0.12); }
 
-        /* OTP */
-        .dp-otp-row {
-          display: flex; align-items: center; gap: 6px;
-          margin-top: 6px; flex-wrap: wrap;
-        }
-
+        .dp-otp-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
         .dp-otp-input {
-          width: 74px; padding: 6px 10px;
-          font-size: 12.5px; letter-spacing: 0.15em;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          color: #1a2e15; background: #fff;
-          border: 1.5px solid #e2e8df; border-radius: 8px; outline: none;
-          transition: border-color 0.2s;
+          width: 74px; padding: 6px 10px; font-size: 12.5px; letter-spacing: 0.15em;
+          font-family: 'Plus Jakarta Sans', sans-serif; color: #1a2e15; background: #fff;
+          border: 1.5px solid #e2e8df; border-radius: 8px; outline: none; transition: border-color 0.2s;
         }
-
         .dp-otp-input:focus { border-color: #4ade80; }
-
-        .dp-btn-send {
-          padding: 6px 11px; font-size: 11px; font-weight: 700;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          background: #eff6ff; color: #2563eb;
-          border: 1.5px solid #bfdbfe; border-radius: 8px; cursor: pointer;
-          transition: background 0.2s; white-space: nowrap;
-        }
-
+        .dp-btn-send { padding: 6px 11px; font-size: 11px; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; background: #eff6ff; color: #2563eb; border: 1.5px solid #bfdbfe; border-radius: 8px; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
         .dp-btn-send:hover { background: #dbeafe; }
         .dp-btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .dp-btn-verify {
-          padding: 6px 11px; font-size: 11px; font-weight: 700;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          background: #f0fdf4; color: #16a34a;
-          border: 1.5px solid #bbf7d0; border-radius: 8px; cursor: pointer;
-          transition: background 0.2s;
-        }
-
+        .dp-btn-verify { padding: 6px 11px; font-size: 11px; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; background: #f0fdf4; color: #16a34a; border: 1.5px solid #bbf7d0; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
         .dp-btn-verify:hover { background: #dcfce7; }
+        .dp-verified { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 700; color: #16a34a; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 5px 10px; }
 
-        .dp-verified {
-          display: inline-flex; align-items: center; gap: 5px;
-          font-size: 11.5px; font-weight: 700; color: #16a34a;
-          background: #f0fdf4; border: 1px solid #bbf7d0;
-          border-radius: 8px; padding: 5px 10px;
-        }
-
-        /* FILE */
         .dp-file-wrap { display: flex; flex-direction: column; gap: 4px; }
-
-        .dp-file-lbl {
-          font-size: 9.5px; font-weight: 700;
-          text-transform: uppercase; letter-spacing: 0.06em;
-          color: #7a9475;
-        }
-
-        .dp-file-zone {
-          display: flex; align-items: center; gap: 8px;
-          padding: 8px 12px;
-          background: #f8faf7;
-          border: 1.5px dashed #cfdacb;
-          border-radius: 10px; cursor: pointer; position: relative;
-          transition: border-color 0.2s, background 0.2s;
-          font-size: 12px; color: #9aaa96;
-        }
-
+        .dp-file-lbl { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #7a9475; }
+        .dp-file-zone { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #f8faf7; border: 1.5px dashed #cfdacb; border-radius: 10px; cursor: pointer; position: relative; transition: border-color 0.2s, background 0.2s; font-size: 12px; color: #9aaa96; }
         .dp-file-zone:hover { border-color: #4ade80; background: #f0fdf4; color: #15803d; }
+        .dp-file-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 
-        .dp-file-zone input[type=file] {
-          position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-        }
+        .dp-checkbox-row { display: flex; align-items: center; gap: 9px; font-size: 12px; color: #6b7c65; padding: 9px 12px; background: #f8faf7; border: 1px solid #e8ede6; border-radius: 10px; }
+        .dp-checkbox-row input[type=checkbox] { width: 14px; height: 14px; accent-color: #16a34a; cursor: pointer; flex-shrink: 0; }
 
-        /* CHECKBOX */
-        .dp-checkbox-row {
-          display: flex; align-items: center; gap: 9px;
-          font-size: 12px; color: #6b7c65;
-          padding: 9px 12px;
-          background: #f8faf7; border: 1px solid #e8ede6; border-radius: 10px;
-        }
+        .dp-footer { flex-shrink: 0; padding: 12px 28px 18px; display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #f0f4ef; }
+        .dp-btn-row { display: flex; gap: 8px; }
 
-        .dp-checkbox-row input[type=checkbox] {
-          width: 14px; height: 14px; accent-color: #16a34a; cursor: pointer; flex-shrink: 0;
-        }
-
-        /* FOOTER */
-        .dp-footer {
-          flex-shrink: 0;
-          padding: 12px 30px 16px;
-          display: flex; flex-direction: column; gap: 10px;
-          border-top: 1px solid #f0f4ef;
-        }
-
-        .dp-btn-row { display: flex; gap: 8px; margin-top: 12px;  }
-
-        .dp-btn-back {
-          padding: 10px 18px; font-size: 13px; font-weight: 600;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          background: #f0f4ef; color: #4b5a44;
-          border: none; border-radius: 12px; cursor: pointer;
-          transition: background 0.2s;
-        }
-
+        .dp-btn-back { padding: 10px 18px; font-size: 13px; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif; background: #f0f4ef; color: #4b5a44; border: none; border-radius: 12px; cursor: pointer; transition: background 0.2s; }
         .dp-btn-back:hover { background: #e2e8df; }
 
-        .dp-btn-next {
-          flex: 1; padding: 10px; font-size: 13px; font-weight: 700;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          background: linear-gradient(135deg, #15803d, #22c55e);
-          color: #fff; border: none; border-radius: 12px; cursor: pointer;
-          transition: opacity 0.2s, transform 0.15s;
-          
-        }
-
+        .dp-btn-next { flex: 1; padding: 11px; font-size: 13px; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #15803d, #22c55e); color: #fff; border: none; border-radius: 12px; cursor: pointer; transition: opacity 0.2s, transform 0.15s; }
         .dp-btn-next:hover { opacity: 0.9; transform: translateY(-1px); }
         .dp-btn-next:active { transform: translateY(0); }
+        .dp-btn-next:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        /* SWITCH */
-        .dp-switch {
-          text-align: center; font-size: 12px; color: #9aaa96;
+        .dp-switch { text-align: center; font-size: 12px; color: #9aaa96; }
+        .dp-switch button { background: none; border: none; color: #16a34a; font-weight: 700; font-size: 12px; font-family: 'Plus Jakarta Sans', sans-serif; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+
+        .dp-login-body { display: flex; flex-direction: column; gap: 10px; padding: 24px 28px; }
+        .dp-signin-btn { width: 100%; padding: 13px; font-size: 14px; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #15803d, #22c55e); color: #fff; border: none; border-radius: 14px; cursor: pointer; transition: opacity 0.2s, transform 0.15s; margin-top: 4px; }
+        .dp-signin-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .dp-forgot { text-align: right; background: none; border: none; font-size: 11.5px; color: #16a34a; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        /* ════════════ TABLET ════════════ */
+        @media (min-width: 768px) and (max-width: 1023px) {
+          .dp-left { width: 45%; }
+          .dp-left-text { top: 24px; left: 24px; right: 24px; }
+          .dp-headline { font-size: 22px; }
+          .dp-card { max-width: 400px; }
         }
 
-        .dp-switch button {
-          background: none; border: none;
-          color: #16a34a; font-weight: 700;
-          font-size: 12px; font-family: 'Plus Jakarta Sans', sans-serif;
-          cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
-        }
+        /* ════════════ MOBILE ════════════ */
+        @media (max-width: 767px) {
+          .dp-root { flex-direction: column; height: auto; min-height: 100vh; overflow-y: auto; }
 
-        /* LOGIN BODY */
-        .dp-login-body {
-          flex: 1; display: flex; flex-direction: column;
-          justify-content: center; gap: 10px;
-          padding: 20px 30px;
-        }
+          .dp-left { width: 100%; height: 280px; flex-shrink: 0; }
+          .dp-left-img { object-position: center 15%; }
+          .dp-left-text { top: 20px; left: 20px; right: 20px; gap: 10px; }
+          .dp-headline { font-size: 20px; }
+          .dp-desc { font-size: 11.5px; max-width: 100%; }
+          .dp-stats { gap: 18px; padding-top: 10px; }
+          .dp-stat-n { font-size: 17px; }
 
-        .dp-forgot {
-          text-align: right; background: none; border: none;
-          font-size: 11.5px; color: #16a34a; cursor: pointer;
-          font-family: 'Plus Jakarta Sans', sans-serif;
-          margin-top: -4px;
+          .dp-right { flex: 1; padding: 16px; justify-content: flex-start; }
+          .dp-card { max-width: 100%; border-radius: 20px; }
+          .dp-grid { grid-template-columns: 1fr; }
+          .dp-span2 { grid-column: span 1; }
+          .dp-header { padding: 20px 20px 12px; }
+          .dp-body { padding: 12px 20px; }
+          .dp-footer { padding: 10px 20px 16px; }
+          .dp-login-body { padding: 20px; }
         }
       `}</style>
 
       <div className="dp-root">
-        {/* LEFT */}
+        {/* ── LEFT: full-height banner + overlay text ── */}
         <div className="dp-left">
-          <img
-            src="/assets/Delivery.avif"
-            alt="Delivery Partner"
-            className="dp-left-img"
-          />
-          <div className="dp-left-overlay" />
-          <div className="dp-left-content">
-            <div className="dp-pill">
-              <span className="dp-pill-dot" />
-              Now Hiring
-            </div>
-            <div className="dp-left-title">
-              Deliver Smarter.
+          <img src={banner} alt="Delivery Partner" className="dp-left-img" />
+
+          {/* Gradient so text is legible over the image */}
+          <div />
+
+          {/* Text overlaid on top-left of the banner */}
+          <div className="dp-left-text">
+            <div className="dp-headline">
+              <div className="dp-logo">
+                <img src={Arrow} alt="3arrow" />
+              </div>
+              <em>Deliver Better.</em>
               <br />
               <em>Earn Better.</em>
             </div>
-            <div className="dp-left-desc">
-              Join thousands of delivery partners. Flexible hours, daily
-              payouts, and full KYC support from day one.
-            </div>
+
             <div className="dp-stats">
               <div>
-                <div className="dp-stat-n">12K+</div>
+                <div className="dp-stat-n ">12K+</div>
                 <div className="dp-stat-l">Active Partners</div>
               </div>
               <div>
@@ -681,15 +463,10 @@ const DeliveryPartner = () => {
           </div>
         </div>
 
-        {/* RIGHT */}
+        {/* ── RIGHT: form card ── */}
         <div className="dp-right">
           <div className="dp-card">
-            {/* HEADER */}
             <div className="dp-header">
-              <div className="dp-logo">
-                <div className="dp-logo-mark">🛵</div>
-                <div className="dp-logo-name">3arrow</div>
-              </div>
               <div className="dp-heading">
                 {isLogin ? "Welcome back" : "Create Account"}
               </div>
@@ -719,7 +496,6 @@ const DeliveryPartner = () => {
               )}
             </div>
 
-            {/* ── LOGIN ── */}
             {isLogin ? (
               <>
                 <form onSubmit={handleLogin} className="dp-login-body">
@@ -742,10 +518,7 @@ const DeliveryPartner = () => {
                   <button type="button" className="dp-forgot">
                     Forgot password?
                   </button>
-                  <button
-                    className=" h-15 rounded-2xl bg-green-500"
-                    type="submit"
-                  >
+                  <button className="dp-signin-btn" type="submit">
                     Sign In →
                   </button>
                 </form>
@@ -766,14 +539,9 @@ const DeliveryPartner = () => {
               </>
             ) : (
               <>
-                {/* BODY */}
                 <div className="dp-body">
-                  {/* STEP 1 */}
                   {step === 1 && (
                     <div className="dp-step-panel">
-                      {/* <div className="dp-panel-title">
-                        👤 Personal Information
-                      </div> */}
                       <div className="dp-grid">
                         <div className="dp-span2">
                           <input
@@ -784,7 +552,6 @@ const DeliveryPartner = () => {
                             required
                           />
                         </div>
-                        {/* Phone OTP */}
                         <div className="dp-span2">
                           <input
                             className="dp-input"
@@ -793,48 +560,7 @@ const DeliveryPartner = () => {
                             onChange={handleChange}
                             required
                           />
-                          <div className="dp-otp-row">
-                            {!phoneOTPVerified ? (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={handleSendPhoneOTP}
-                                  disabled={otpLoading.phone}
-                                  className="dp-btn-send"
-                                >
-                                  {otpLoading.phone
-                                    ? "Sending…"
-                                    : otpSent.phone
-                                      ? "Resend"
-                                      : "Send OTP"}
-                                </button>
-                                {otpSent.phone && (
-                                  <>
-                                    <input
-                                      type="text"
-                                      placeholder="OTP"
-                                      value={otp}
-                                      onChange={(e) => setOtp(e.target.value)}
-                                      className="dp-otp-input"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={handleVerifyPhoneOTP}
-                                      className="dp-btn-verify"
-                                    >
-                                      Verify
-                                    </button>
-                                  </>
-                                )}
-                              </>
-                            ) : (
-                              <span className="dp-verified">
-                                ✓ Phone Verified
-                              </span>
-                            )}
-                          </div>
                         </div>
-                        {/* Email OTP */}
                         <div className="dp-span2">
                           <input
                             className="dp-input"
@@ -903,7 +629,7 @@ const DeliveryPartner = () => {
                         <select
                           name="gender"
                           onChange={handleChange}
-                          className="dp-select pb-0.5"
+                          className="dp-select"
                           required
                         >
                           <option value="">Gender</option>
@@ -921,10 +647,8 @@ const DeliveryPartner = () => {
                     </div>
                   )}
 
-                  {/* STEP 2 */}
                   {step === 2 && (
                     <div className="dp-step-panel">
-                      {/* <div className="dp-panel-title">🪪 KYC Documents</div> */}
                       <div className="dp-grid">
                         <input
                           className="dp-input"
@@ -985,12 +709,8 @@ const DeliveryPartner = () => {
                     </div>
                   )}
 
-                  {/* STEP 3 */}
                   {step === 3 && (
                     <div className="dp-step-panel">
-                      {/* <div className="dp-panel-title">
-                        🛵 Vehicle Information
-                      </div> */}
                       <div className="dp-grid">
                         <div className="dp-span2">
                           <select
@@ -1038,10 +758,8 @@ const DeliveryPartner = () => {
                     </div>
                   )}
 
-                  {/* STEP 4 */}
                   {step === 4 && (
                     <div className="dp-step-panel">
-                      {/* <div className="dp-panel-title">🏦 Bank Details</div> */}
                       <div className="dp-grid">
                         <div className="dp-span2">
                           <input
@@ -1096,7 +814,6 @@ const DeliveryPartner = () => {
                   )}
                 </div>
 
-                {/* FOOTER */}
                 <div className="dp-footer">
                   <div className="dp-btn-row">
                     {step > 1 && (
@@ -1110,7 +827,7 @@ const DeliveryPartner = () => {
                     )}
                     {step < 4 ? (
                       <button
-                        className=" dp-btn-next"
+                        className="dp-btn-next"
                         type="button"
                         onClick={nextStep}
                         disabled={!isStepValid()}

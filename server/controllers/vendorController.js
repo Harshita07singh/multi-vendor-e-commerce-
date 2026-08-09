@@ -17,6 +17,19 @@ export const getAllVendors = async (req, res) => {
   }
 };
 
+// Get approved vendors (Public) — used on homepage / vendor listing
+export const getApprovedVendors = async (req, res) => {
+  try {
+    const vendors = await Vendor.find({ status: "approved" })
+      .populate("userId", "name email phone")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(vendors);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Get single vendor details
 export const getVendorById = async (req, res) => {
   try {
@@ -50,13 +63,55 @@ export const getMyVendor = async (req, res) => {
   }
 };
 
+// ── Upload / update vendor logo ───────────────────────────────────────────────
+// POST /api/auth/vendor/upload-logo
+// Multer field: "logo" (single file)
+// processImages middleware converts it to webp before this runs
+export const uploadVendorLogo = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Koi logo file nahi mili" });
+    }
+
+    // req.file.filename is "images/xxx.webp" after processImages
+    const logoPath = `/uploads/${req.file.filename}`;
+
+    // Use $set with dot notation — most reliable for nested fields in Mongoose
+    // Avoids markModified issues when brandDetails is Mixed/nested type
+    const vendor = await Vendor.findOneAndUpdate(
+      { userId: req.user.id },
+      { $set: { "brandDetails.brandLogo": logoPath } },
+      { new: true, runValidators: false },
+    );
+
+    if (!vendor) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Vendor profile not found" });
+    }
+
+    console.log(`✓ Logo saved → vendor: ${vendor._id} | path: ${logoPath}`);
+
+    res.status(200).json({
+      success: true,
+      message: "Logo successfully upload ho gaya",
+      logoUrl: logoPath,
+      vendor,
+    });
+  } catch (error) {
+    console.error("uploadVendorLogo error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Save vendor step
 export async function saveVendorStep(req, res) {
   try {
     const { step, data } = req.body;
     const userId = req.user.id;
 
-    // Validate step and data
     if (!step || !data) {
       return res.status(400).json({
         success: false,
@@ -70,9 +125,7 @@ export async function saveVendorStep(req, res) {
       vendor = new Vendor({ userId });
     }
 
-    // Update the specific step
     vendor[step] = data;
-
     await vendor.save();
 
     res.status(200).json({
@@ -89,7 +142,6 @@ export async function saveVendorStep(req, res) {
 export const submitVendor = async (req, res) => {
   try {
     const userId = req.user.id;
-
     const vendor = await Vendor.findOne({ userId });
 
     if (!vendor) {
@@ -99,7 +151,6 @@ export const submitVendor = async (req, res) => {
       });
     }
 
-    // Check if vendor has all required information
     if (
       !vendor.businessDetails?.businessName ||
       !vendor.sellerDetails?.sellerName
@@ -128,7 +179,6 @@ export const updateVendorStatus = async (req, res) => {
   try {
     const { vendorId, status, remark } = req.body;
 
-    // Validate status
     const validStatuses = ["approved", "rejected"];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
@@ -149,7 +199,6 @@ export const updateVendorStatus = async (req, res) => {
     vendor.status = status;
     vendor.adminRemark = remark || "";
     vendor.approvedBy = req.user.id;
-
     await vendor.save();
 
     res.json({
@@ -171,11 +220,7 @@ export const getMyVendorProducts = async (req, res) => {
       return res.status(404).json({ message: "Vendor profile not found" });
     }
 
-    const query = {
-      vendor: vendor._id,
-      isDeleted: false,
-    };
-
+    const query = { vendor: vendor._id, isDeleted: false };
     if (category) query.category = category;
     if (subCategory) query.subCategory = subCategory;
     if (search) query.$text = { $search: search };
@@ -190,12 +235,7 @@ export const getMyVendorProducts = async (req, res) => {
     const total = await Product.countDocuments(query);
     const pages = Math.ceil(total / limit);
 
-    res.json({
-      products,
-      total,
-      page: Number(page),
-      pages,
-    });
+    res.json({ products, total, page: Number(page), pages });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -229,11 +269,7 @@ export const getMyVendorSubCategories = async (req, res) => {
       return res.status(404).json({ message: "Vendor profile not found" });
     }
 
-    const query = {
-      vendor: vendor._id,
-      isActive: true,
-    };
-
+    const query = { vendor: vendor._id, isActive: true };
     if (category) query.category = category;
 
     const subCategories = await SubCategory.find(query)

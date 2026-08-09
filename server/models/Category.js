@@ -1,4 +1,3 @@
-// models/Category.js
 import { Schema, model } from "mongoose";
 
 const seoSchema = new Schema(
@@ -43,11 +42,32 @@ const categorySchema = new Schema(
       default: true,
     },
 
+    /**
+     * Platform margin (commission) percentage for this category.
+     *
+     * Every product listed under this category incurs this margin.
+     * It is deducted from the selling price (price) to determine
+     * the amount the vendor actually receives.
+     *
+     * Calculation applied on the product level:
+     *   platformCommission = product.price × (margin / 100)
+     *   vendorEarnings     = product.price − platformCommission
+     *
+     * Range: 0 – 100  (percent)
+     * Default: 0  (no platform cut)
+     */
+    margin: {
+      type: Number,
+      default: 0,
+      min: [0, "Margin cannot be negative"],
+      max: [100, "Margin cannot exceed 100%"],
+    },
+
     // Vendor association
     vendor: {
       type: Schema.Types.ObjectId,
       ref: "Vendor",
-      required: true,
+      // required: true,
       index: true,
     },
   },

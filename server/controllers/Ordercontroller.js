@@ -1,11 +1,7 @@
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import Vendor from "../models/Vendor.js";
-
-/* ═══════════════════════════════════════════════════════════
-   POST /api/orders
-   Place a new order. Requires auth (any logged-in user).
-═══════════════════════════════════════════════════════════ */
+import { notifyNearbyDeliveryPartners } from "./Deliverydashboardcontroller.js";
 export const createOrder = async (req, res) => {
   try {
     const {
@@ -307,26 +303,44 @@ export const adminUpdateOrderStatus = async (req, res) => {
         .json({ success: false, message: `Invalid status "${status}"` });
     }
 
+    // ✅ Fetch ONCE at the top — used by both cancelled and shipped blocks
+    const existingOrder = await Order.findById(req.params.id);
+    if (!existingOrder) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+
     const update = {};
     if (status !== undefined) update.status = status;
     if (trackingNumber !== undefined) update.trackingNumber = trackingNumber;
     if (notes !== undefined) update.notes = notes;
 
-    /* Auto-mark COD as paid when delivered */
     if (status === "delivered") {
       update.isPaid = true;
       update.paidAt = new Date();
     }
 
-    /* Restore stock if admin cancels an order that wasn't already cancelled */
-    if (status === "cancelled") {
-      const existingOrder = await Order.findById(req.params.id);
-      if (existingOrder && existingOrder.status !== "cancelled") {
-        for (const item of existingOrder.items) {
-          await Product.findByIdAndUpdate(item.product, {
-            $inc: { stock: item.quantity },
-          });
+    if (status === "cancelled" && existingOrder.status !== "cancelled") {
+      for (const item of existingOrder.items) {
+        await Product.findByIdAndUpdate(item.product, {
+          $inc: { stock: item.quantity },
+        });
+      }
+    }
+
+    // ✅ Now this works — existingOrder and existingOrder.vendors are available
+    if (status === "shipped" && existingOrder.status !== "shipped") {
+      try {
+        const vendorId = existingOrder.vendors?.[0];
+        if (vendorId) {
+          const vendor = await Vendor.findById(vendorId).select("location");
+          const lat = vendor?.location?.coordinates?.lat || 28.6139;
+          const lng = vendor?.location?.coordinates?.lng || 77.209;
+          await notifyNearbyDeliveryPartners(existingOrder._id, lat, lng, 15);
         }
+      } catch (e) {
+        console.error("[Delivery notify] Failed:", e.message);
       }
     }
 
@@ -335,12 +349,6 @@ export const adminUpdateOrderStatus = async (req, res) => {
     })
       .populate("user", "name email phone")
       .populate("items.product", "name images");
-
-    if (!order) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Order not found" });
-    }
 
     return res.json({ success: true, message: "Order updated", data: order });
   } catch (err) {
@@ -351,8 +359,9 @@ export const adminUpdateOrderStatus = async (req, res) => {
 // VENDOR: update status of orders containing vendor products
 export const vendorUpdateOrderStatus = async (req, res) => {
   try {
-    const VALID = ["processing", "shipped", "cancelled"];
+    const VALID = ["processing", "shipped", "delivered", "cancelled"];
     const { status, trackingNumber, notes } = req.body;
+
     if (status && !VALID.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -367,22 +376,35 @@ export const vendorUpdateOrderStatus = async (req, res) => {
         .json({ success: false, message: "Vendor not found" });
     }
 
-    const order = await Order.findById(req.params.id);
-    if (!order) {
+    // Fetch order BEFORE the update so we can compare old vs new status
+    const existingOrder = await Order.findById(req.params.id).populate(
+      "items.product",
+      "vendor",
+    );
+    if (!existingOrder) {
       return res
         .status(404)
         .json({ success: false, message: "Order not found" });
     }
 
-    const hasItem = order.items.some(
-      (item) => item.product?.vendor?.toString() === vendor._id.toString(),
-    );
+    const previousStatus = existingOrder.status; // save BEFORE we change it
+
+    // Authorisation check — vendor must own at least one item in this order
+    const hasItem =
+      existingOrder.vendors?.some(
+        (v) => v.toString() === vendor._id.toString(),
+      ) ||
+      existingOrder.items.some(
+        (item) => item.product?.vendor?.toString() === vendor._id.toString(),
+      );
+
     if (!hasItem) {
       return res
         .status(403)
         .json({ success: false, message: "Not authorized" });
     }
 
+    // Build the update payload
     const update = {};
     if (status !== undefined) update.status = status;
     if (trackingNumber !== undefined) update.trackingNumber = trackingNumber;
@@ -391,6 +413,43 @@ export const vendorUpdateOrderStatus = async (req, res) => {
     const updated = await Order.findByIdAndUpdate(req.params.id, update, {
       new: true,
     });
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Notify nearby delivery partners when order FIRST becomes "shipped"
+    // ─────────────────────────────────────────────────────────────────────
+    if (status === "shipped" && previousStatus !== "shipped") {
+      try {
+        // Use vendor's stored location if available.
+        // Falls back to Delhi coords — change to your city if needed.
+        // The notify function itself also handles partners with no GPS data.
+        const vendorLat =
+          vendor?.location?.coordinates?.lat ??
+          vendor?.address?.coordinates?.lat ??
+          28.6139;
+        const vendorLng =
+          vendor?.location?.coordinates?.lng ??
+          vendor?.address?.coordinates?.lng ??
+          77.209;
+
+        const notified = await notifyNearbyDeliveryPartners(
+          updated._id,
+          vendorLat,
+          vendorLng,
+          15, // initial search radius in km
+        );
+
+        console.log(
+          `[Order ${updated._id}] Notified ${notified} delivery partners (status → shipped)`,
+        );
+      } catch (notifyErr) {
+        // Non-fatal — the order status was saved successfully.
+        // Log the error but don't fail the API response.
+        console.error(
+          "[vendorUpdateOrderStatus] Notify error:",
+          notifyErr.message,
+        );
+      }
+    }
 
     res.json({ success: true, message: "Order updated", data: updated });
   } catch (err) {

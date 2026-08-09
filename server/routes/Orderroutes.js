@@ -19,13 +19,13 @@ const router = express.Router();
 ──────────────────────────────────────────── */
 router.post("/", protect, createOrder); // POST   /api/orders
 router.get("/", protect, getMyOrders); // GET    /api/orders
-router.get("/:id", protect, getOrderById); // GET    /api/orders/:id
+router.get("/vendor/my-orders", protect, getVendorOrders);
 router.put("/:id/cancel", protect, cancelOrder); // PUT    /api/orders/:id/cancel
 
 /* ────────────────────────────────────────────
    Vendor routes  (require login + vendor role)
 ──────────────────────────────────────────── */
-router.get("/vendor/my-orders", protect, getVendorOrders); // GET /api/orders/vendor/my-orders
+router.get("/:id", protect, getOrderById);
 router.put("/vendor/:id/status", protect, vendorUpdateOrderStatus); // PUT /api/orders/vendor/:id/status
 
 /* ────────────────────────────────────────────

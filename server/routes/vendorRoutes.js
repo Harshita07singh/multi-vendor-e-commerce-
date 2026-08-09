@@ -5,11 +5,13 @@ import {
   submitVendor,
   updateVendorStatus,
   getAllVendors,
+  getApprovedVendors,
   getVendorById,
   getMyVendor,
   getMyVendorProducts,
   getMyVendorCategories,
   getMyVendorSubCategories,
+  uploadVendorLogo, // ← NEW
 } from "../controllers/vendorController.js";
 import {
   createCategory,
@@ -19,16 +21,30 @@ import {
 import upload, { processImages } from "../middleware/uploadMiddleware.js";
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 
-// Vendor routes
+// ── Public routes (no auth required) ──────────────────────────────────────
+router.get("/approved", getApprovedVendors);
+
+// ── Vendor routes (authenticated) ─────────────────────────────────────────
 router.post("/save-step", protect, saveVendorStep);
 router.post("/submit", protect, submitVendor);
 router.get("/my-profile", protect, getMyVendor);
 
+// ── Logo upload (NEW) ──────────────────────────────────────────────────────
+// POST /api/vendor/upload-logo
+// Field name: "logo" (single image)
+router.post(
+  "/upload-logo",
+  protect,
+  upload.single("logo"), // multer picks up "logo" field
+  processImages, // sharp converts to webp + thumbnail
+  uploadVendorLogo, // saves path to vendor.brandDetails.brandLogo
+);
+
 // Vendor-specific data routes
 router.get("/my-products", protect, getMyVendorProducts);
-// Categories and CRUD available under general category routes, but expose helpers here for consistency
+
+// Categories CRUD
 router.get("/my-categories", protect, getMyVendorCategories);
-// category CRUD
 router.post(
   "/my-categories",
   protect,
@@ -45,12 +61,13 @@ router.put(
 );
 router.delete("/my-categories/:id", protect, deleteCategory);
 
-// subcategory CRUD
+// Subcategories CRUD
 import {
   createSubCategory,
   updateSubCategory,
   deleteSubCategory,
 } from "../controllers/subCategory.controller.js";
+router.get("/my-subcategories", protect, getMyVendorSubCategories);
 router.post(
   "/my-subcategories",
   protect,
@@ -66,9 +83,8 @@ router.put(
   updateSubCategory,
 );
 router.delete("/my-subcategories/:id", protect, deleteSubCategory);
-router.get("/my-subcategories", protect, getMyVendorSubCategories);
 
-// Vendor-specific coupon route
+// Coupons CRUD
 import {
   getAllCoupons,
   createCoupon,
@@ -80,17 +96,31 @@ router.post("/my-coupons", protect, createCoupon);
 router.patch("/my-coupons/:id", protect, updateCoupon);
 router.delete("/my-coupons/:id", protect, deleteCoupon);
 
-// Vendor-specific orders route
-import { getVendorOrders } from "../controllers/Ordercontroller.js";
+// Orders
+import {
+  getVendorOrders,
+  vendorUpdateOrderStatus,
+} from "../controllers/Ordercontroller.js";
 router.get("/my-orders", protect, getVendorOrders);
+router.put("/orders/vendor/:id/status", protect, vendorUpdateOrderStatus);
 
-// Admin routes
-router.get("/admin/all", protect, authorizeRoles("admin"), getAllVendors);
-router.get("/admin/:id", protect, authorizeRoles("admin"), getVendorById);
+// ── Admin routes ───────────────────────────────────────────────────────────
+router.get(
+  "/admin/all",
+  protect,
+  authorizeRoles("admin", "superadmin"),
+  getAllVendors,
+);
+router.get(
+  "/admin/:id",
+  protect,
+  authorizeRoles("admin", "superadmin"),
+  getVendorById,
+);
 router.put(
   "/admin/update-status",
   protect,
-  authorizeRoles("admin"),
+  authorizeRoles("admin", "superadmin"),
   updateVendorStatus,
 );
 

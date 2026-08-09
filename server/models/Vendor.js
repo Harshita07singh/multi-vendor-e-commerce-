@@ -17,11 +17,24 @@ const vendorSchema = new Schema(
       panNumber: String,
       businessEmail: String,
       businessPhone: String,
-      website: String,
       yearEstablished: Number,
       numberOfEmployees: Number,
       categories: [String],
       retailChannel: String,
+
+      // ── Onboarding type ──────────────────────────────────────────
+      // Vendor can be a retailer, wholesaler, or both.
+      // Stored as an array so both can be selected simultaneously.
+      // e.g. ["retailer"] | ["wholesaler"] | ["retailer","wholesaler"]
+      onboardingType: {
+        type: [
+          {
+            type: String,
+            enum: ["retailer", "wholesaler"],
+          },
+        ],
+        default: [],
+      },
     },
 
     //  Seller Details
@@ -41,6 +54,7 @@ const vendorSchema = new Schema(
       brandType: String,
       trademarkNumber: String,
       brandWebsite: String,
+      brandLogo: String,
     },
 
     //  Bank Details
@@ -58,6 +72,8 @@ const vendorSchema = new Schema(
       city: String,
       state: String,
       pincode: String,
+      latitude: Number,
+      longitude: Number,
     },
 
     //  Digital Signature
@@ -83,6 +99,27 @@ const vendorSchema = new Schema(
     approvedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
+    },
+
+    subscription: {
+      plan: {
+        type: String,
+        enum: ["free", "pro", "premium"],
+        default: "free",
+      },
+      billing: {
+        type: String,
+        enum: ["monthly", "yearly", null],
+        default: null,
+      },
+      expiresAt: {
+        type: Date,
+        default: null,
+      },
+      razorpayOrderId: { type: String, default: null },
+      razorpayPaymentId: { type: String, default: null },
+      razorpaySignature: { type: String, default: null },
+      activatedAt: { type: Date, default: null },
     },
   },
   { timestamps: true },

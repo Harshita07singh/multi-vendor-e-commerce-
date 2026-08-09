@@ -17,7 +17,10 @@ router.get(
 
 router.get(
   "/google/callback",
-  passport.authenticate("google", { session: false }),
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: "/login",
+  }),
   (req, res) => {
     const token = jwt.sign(
       { id: req.user._id, role: req.user.role },
@@ -25,7 +28,9 @@ router.get(
       { expiresIn: "7d" },
     );
 
-    res.redirect(`http://localhost:5174/login-success?token=${token}`);
+    // ✅ Use env var, not hardcoded localhost
+    const frontendURL = process.env.FRONTEND_URL || "http://localhost:5174";
+    res.redirect(`${frontendURL}/login-success?token=${token}`);
   },
 );
 

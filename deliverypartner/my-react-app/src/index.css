@@ -1,4 +1,27 @@
 @import "tailwindcss";
+html {
+  overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
+}
+
+body {
+  overscroll-behavior: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: 100%;
+  position: fixed; /* Prevents top/side bounce on iOS/macOS trackpad */
+  width: 100%;
+  body {
+    background: #ffffff;
+  }
+}
+
+#root {
+  overscroll-behavior: none;
+  height: 100%;
+  overflow-y: auto; /* Let the root element scroll instead of body */
+}
 .input {
   @apply w-full p-3 rounded-xl bg-white/20 text-white placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2 focus:ring-white transition;
 }

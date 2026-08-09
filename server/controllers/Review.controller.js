@@ -1,12 +1,5 @@
 import Review from "../models/Review.model.js";
-// If you have an Order model, import it to check verified purchases:
-// import Order from "../models/Order.model.js";
 
-// ─────────────────────────────────────────────────────────────
-// @desc    Get all reviews for a product (paginated)
-// @route   GET /api/reviews/:productId
-// @access  Public
-// ─────────────────────────────────────────────────────────────
 export const getReviews = async (req, res) => {
   try {
     const { page = 1, limit = 8, sort = "newest", rating } = req.query;
@@ -152,12 +145,10 @@ export const updateReview = async (req, res) => {
     }
 
     if (review.user.toString() !== req.user._id.toString()) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Not authorised to edit this review",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "Not authorised to edit this review",
+      });
     }
 
     const { rating, title, body, images } = req.body;
@@ -200,12 +191,10 @@ export const deleteReview = async (req, res) => {
     const isAdmin = req.user.role === "admin";
 
     if (!isOwner && !isAdmin) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Not authorised to delete this review",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "Not authorised to delete this review",
+      });
     }
 
     await Review.findByIdAndDelete(req.params.reviewId);

@@ -112,10 +112,10 @@ export const deleteAdmin = async (req, res) => {
 
 // Get pending deliveries
 export const getPendingDeliveries = async (req, res) => {
+  res.set("Cache-Control", "no-store");
   try {
     const deliveries = await User.find({
       role: "delivery",
-      isApproved: false,
     }).select("-password");
 
     res.json({

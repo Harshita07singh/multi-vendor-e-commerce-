@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { getMyVendor } from "../services/vendorService";
 
 const LoginSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -12,16 +13,34 @@ const LoginSuccess = () => {
     if (token) {
       // Store token
       localStorage.setItem("accessToken", token);
-      // Fetch user data (optional - if backend returns it in Google response)
-      // For now, we'll just show success and redirect
 
-      toast.success("Login successful! 🎉");
+      // Check if vendor profile exists
+      const checkVendorProfile = async () => {
+        try {
+          const vendor = await getMyVendor();
+          console.log("Vendor profile check result:", vendor);
 
-      // Redirect to dashboard after 1.5 seconds
-      setTimeout(() => {
-        navigate("/dashboard");
-        window.location.reload();
-      }, 1500);
+          if (vendor) {
+            // Vendor profile exists, go to dashboard
+            toast.success("Login successful! 🎉");
+            setTimeout(() => {
+              navigate("/dashboard");
+            }, 1500);
+          } else {
+            // No vendor profile, redirect to onboarding
+            toast.success("Login successful! 🎉");
+            setTimeout(() => {
+              navigate("/vendor/onboarding");
+            }, 1500);
+          }
+        } catch (error) {
+          console.error("Error checking vendor profile:", error);
+          toast.error("Login failed. Please try again.");
+          setTimeout(() => navigate("/"), 2000);
+        }
+      };
+
+      checkVendorProfile();
     } else {
       toast.error("Login failed. No token received.");
       setTimeout(() => navigate("/"), 2000);

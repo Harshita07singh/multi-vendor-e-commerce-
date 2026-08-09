@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import { saveVendorStep, getMyVendor } from "../../services/vendorService";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/auth/vendor";
+const API_ORIGIN = API_BASE_URL.replace(/\/api\/auth\/vendor.*$/, "");
+const CAT_API = `${API_ORIGIN}/api/categories`;
+
 const BusinessDetails = ({ setIsStepValid }) => {
   const [formData, setFormData] = useState({
     businessName: "",
@@ -9,22 +13,55 @@ const BusinessDetails = ({ setIsStepValid }) => {
     panNumber: "",
     businessEmail: "",
     businessPhone: "",
-    website: "",
     yearEstablished: "",
     numberOfEmployees: "",
     categories: [],
-    retailChannel: "",
+    onboardingType: [], // ← "retailer" | "wholesaler" | both
   });
 
   const [isOpen, setIsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [categoriesList, setCategoriesList] = useState([]);
+  const [loadingCats, setLoadingCats] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Validate form fields
+  // ── Fetch active categories ──
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setLoadingCats(true);
+      try {
+        const token = localStorage.getItem("accessToken");
+        const res = await fetch(CAT_API, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          credentials: "include",
+        });
+        const raw = await res.json();
+        const all = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.data)
+            ? raw.data
+            : Array.isArray(raw?.categories)
+              ? raw.categories
+              : [];
+        const active = all.filter((c) => c.isActive).map((c) => c.name);
+        setCategoriesList(active);
+      } catch (err) {
+        console.error("Failed to fetch categories:", err);
+      } finally {
+        setLoadingCats(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // ── Validate ──
   const validateForm = () => {
-    const isValid =
+    return (
       formData.businessName &&
       formData.businessType &&
       formData.gstNumber &&
@@ -34,18 +71,15 @@ const BusinessDetails = ({ setIsStepValid }) => {
       formData.yearEstablished &&
       formData.numberOfEmployees &&
       formData.categories.length > 0 &&
-      formData.retailChannel;
-    return isValid;
+      formData.onboardingType.length > 0 // at least one must be checked
+    );
   };
 
-  // Update validation when formData changes
   useEffect(() => {
-    if (setIsStepValid) {
-      setIsStepValid(validateForm());
-    }
+    if (setIsStepValid) setIsStepValid(validateForm());
   }, [formData, setIsStepValid]);
 
-  // Load initial data from vendor profile
+  // ── Load saved vendor data ──
   useEffect(() => {
     const loadVendorData = async () => {
       try {
@@ -54,39 +88,33 @@ const BusinessDetails = ({ setIsStepValid }) => {
           setFormData((prev) => ({
             ...prev,
             ...vendor.businessDetails,
+            // ensure array even if old data has none
+            onboardingType: vendor.businessDetails.onboardingType || [],
           }));
         }
       } catch (err) {
         console.log("No existing vendor data found");
       }
     };
-
     loadVendorData();
   }, []);
 
-  // Close dropdown when clicking outside
+  // ── Close dropdown on outside click ──
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target))
         setIsOpen(false);
-      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Auto-save when formData changes (debounced)
+  // ── Auto-save (debounced) ──
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (
-        formData.businessName ||
-        formData.businessType ||
-        formData.gstNumber
-      ) {
+      if (formData.businessName || formData.businessType || formData.gstNumber)
         handleAutoSave();
-      }
     }, 2000);
-
     return () => clearTimeout(timer);
   }, [formData]);
 
@@ -95,132 +123,26 @@ const BusinessDetails = ({ setIsStepValid }) => {
       setSaving(true);
       setError("");
       await saveVendorStep("businessDetails", formData);
-      setSuccess("Data saved successfully");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.message || "Failed to save data");
-      console.error("Save error:", err);
     } finally {
       setSaving(false);
     }
   };
 
-  const categoriesList = [
-    "Electronics",
-    "Mobile Phones",
-    "Laptops",
-    "Tablets",
-    "Cameras",
-    "Television",
-    "Audio",
-    "Headphones",
-    "Smart Watches",
-    "Gaming",
-    "Video Games",
-    "Consoles",
-    "Accessories",
-    "Fashion",
-    "Men Clothing",
-    "Women Clothing",
-    "Kids Clothing",
-    "Shoes",
-    "Bags",
-    "Jewelry",
-    "Watches",
-    "Beauty",
-    "Skincare",
-    "Makeup",
-    "Haircare",
-    "Health",
-    "Supplements",
-    "Medical Supplies",
-    "Fitness Equipment",
-    "Sports",
-    "Outdoor",
-    "Cycling",
-    "Camping",
-    "Home",
-    "Furniture",
-    "Kitchen",
-    "Appliances",
-    "Home Decor",
-    "Bedding",
-    "Lighting",
-    "Storage",
-    "Garden",
-    "Tools",
-    "Automotive",
-    "Car Accessories",
-    "Motorbike Accessories",
-    "Books",
-    "Ebooks",
-    "Stationery",
-    "Office Supplies",
-    "Toys",
-    "Baby Products",
-    "Pet Supplies",
-    "Groceries",
-    "Beverages",
-    "Snacks",
-    "Organic Food",
-    "Frozen Food",
-    "Bakery",
-    "Dairy",
-    "Music",
-    "Movies",
-    "Collectibles",
-    "Art",
-    "Crafts",
-    "Industrial",
-    "Hardware",
-    "Security",
-    "Software",
-    "Services",
-    "Real Estate",
-    "Travel",
-    "Luggage",
-    "Gift Items",
-    "Party Supplies",
-    "Seasonal",
-    "Christmas",
-    "Halloween",
-    "Luxury",
-    "Handmade",
-    "Vintage",
-    "Eco Friendly",
-    "Smart Home",
-    "Networking",
-    "Printers",
-    "Projectors",
-    "Wearables",
-    "VR",
-    "Drones",
-    "Power Banks",
-    "Chargers",
-    "Solar",
-    "Energy",
-    "Construction",
-    "Plumbing",
-    "Electrical",
-    "Safety Equipment",
-  ];
-
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Categories multi-select (max 10)
   const handleCheckboxChange = (e) => {
     const { value, checked } = e.target;
-
     setFormData((prev) => {
       if (checked && prev.categories.length >= 10) {
         alert("You can select maximum 10 categories");
         return prev;
       }
-
       return {
         ...prev,
         categories: checked
@@ -230,6 +152,32 @@ const BusinessDetails = ({ setIsStepValid }) => {
     });
   };
 
+  // Onboarding type toggle (retailer / wholesaler)
+  const handleOnboardingType = (value) => {
+    setFormData((prev) => {
+      const already = prev.onboardingType.includes(value);
+      return {
+        ...prev,
+        onboardingType: already
+          ? prev.onboardingType.filter((t) => t !== value)
+          : [...prev.onboardingType, value],
+      };
+    });
+  };
+
+  const onboardingOptions = [
+    {
+      value: "retailer",
+      label: "Retailer",
+      desc: "Sell directly to end consumers",
+    },
+    {
+      value: "wholesaler",
+      label: "Wholesaler",
+      desc: "Sell in bulk to businesses",
+    },
+  ];
+
   return (
     <>
       <h1 className="text-3xl font-bold mb-2">Business Details</h1>
@@ -237,12 +185,6 @@ const BusinessDetails = ({ setIsStepValid }) => {
         Enter the details about your products and sales
       </p>
 
-      {/* Status Messages */}
-      {saving && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mb-4">
-          Saving...
-        </div>
-      )}
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
           {success}
@@ -255,6 +197,117 @@ const BusinessDetails = ({ setIsStepValid }) => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
+        {/* Product Categories Dropdown */}
+        <div className="relative md:col-span-2" ref={dropdownRef}>
+          <label className="font-semibold block mb-1">
+            Product Categories (Max 10) *
+          </label>
+          <div
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-full border rounded-lg px-4 py-3 bg-white cursor-pointer flex justify-between items-center"
+          >
+            <span className="truncate pr-2">
+              {formData.categories.length > 0
+                ? formData.categories.join(", ")
+                : "Select Categories"}
+            </span>
+            <span className="shrink-0">{isOpen ? "▲" : "▼"}</span>
+          </div>
+
+          {isOpen && (
+            <div className="absolute z-10 mt-2 w-full border rounded-lg bg-white shadow-lg p-4 h-64 overflow-y-scroll">
+              {loadingCats ? (
+                <p className="text-sm text-gray-400 text-center py-4">
+                  Loading categories...
+                </p>
+              ) : categoriesList.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-4">
+                  No categories available
+                </p>
+              ) : (
+                categoriesList.map((category) => (
+                  <label
+                    key={category}
+                    className="flex items-center space-x-2 mb-2 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      value={category}
+                      checked={formData.categories.includes(category)}
+                      onChange={handleCheckboxChange}
+                      className="w-4 h-4"
+                    />
+                    <span>{category}</span>
+                  </label>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+        {/* ── Onboarding Type ── */}
+        <div className="md:col-span-2">
+          <label className="font-semibold block mb-3">
+            Onboard As <span className="text-red-500">*</span>
+            <span className="text-xs font-normal text-gray-400 ml-2">
+              (Select one or both)
+            </span>
+          </label>
+          <div className="flex flex-col sm:flex-row gap-3">
+            {onboardingOptions.map(({ value, label, desc, icon }) => {
+              const selected = formData.onboardingType.includes(value);
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => handleOnboardingType(value)}
+                  className={`flex items-center gap-3 px-5 py-4 rounded-xl border-2 transition-all text-left w-full sm:w-auto
+                    ${
+                      selected
+                        ? "border-[#299E60] bg-[#f0fdf4] shadow-sm"
+                        : "border-gray-200 bg-white hover:border-[#299E60]/50"
+                    }`}
+                >
+                  {/* Custom checkbox circle */}
+                  <span
+                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all
+                      ${selected ? "bg-[#299E60] border-[#299E60]" : "border-gray-300"}`}
+                  >
+                    {selected && (
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={3}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    )}
+                  </span>
+                  <span className="text-xl">{icon}</span>
+                  <div>
+                    <p
+                      className={`text-sm font-bold ${selected ? "text-[#299E60]" : "text-gray-700"}`}
+                    >
+                      {label}
+                    </p>
+                    <p className="text-xs text-gray-400">{desc}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {formData.onboardingType.length === 0 && (
+            <p className="text-xs text-red-400 mt-1.5">
+              Please select at least one option
+            </p>
+          )}
+        </div>
+
         {/* Business Name */}
         <div>
           <label className="font-semibold block mb-2">Business Name *</label>
@@ -269,7 +322,7 @@ const BusinessDetails = ({ setIsStepValid }) => {
 
         {/* Business Type */}
         <div>
-          <label className="font-semibold block mb-2 ">Business Type *</label>
+          <label className="font-semibold block mb-2">Business Type *</label>
           <select
             name="businessType"
             value={formData.businessType}
@@ -332,19 +385,7 @@ const BusinessDetails = ({ setIsStepValid }) => {
           />
         </div>
 
-        {/* Website */}
-        <div>
-          <label className="font-semibold block mb-2">Website</label>
-          <input
-            type="url"
-            name="website"
-            value={formData.website}
-            onChange={handleChange}
-            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
-          />
-        </div>
-
-        {/* Year */}
+        {/* Year Established */}
         <div>
           <label className="font-semibold block mb-2">Year Established *</label>
           <input
@@ -356,7 +397,7 @@ const BusinessDetails = ({ setIsStepValid }) => {
           />
         </div>
 
-        {/* Employees */}
+        {/* Number of Employees */}
         <div>
           <label className="font-semibold block mb-2">
             Number of Employees *
@@ -368,62 +409,6 @@ const BusinessDetails = ({ setIsStepValid }) => {
             onChange={handleChange}
             className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
           />
-        </div>
-
-        {/* Product Categories Dropdown */}
-        <div className="relative md:col-span-2" ref={dropdownRef}>
-          <label className="font-semibold block mb-1">
-            Product Categories (Max 10) *
-          </label>
-
-          <div
-            onClick={() => setIsOpen(!isOpen)}
-            className="w-full border rounded-lg px-4 py-3 bg-white cursor-pointer flex justify-between items-center"
-          >
-            <span>
-              {formData.categories.length > 0
-                ? `${formData.categories} `
-                : "Select Categories"}
-            </span>
-            <span>{isOpen ? "▲" : "▼"}</span>
-          </div>
-
-          {isOpen && (
-            <div className="absolute z-10 mt-2 w-full border rounded-lg bg-white shadow-lg p-4 h-64 overflow-y-scroll">
-              {categoriesList.map((category) => (
-                <label
-                  key={category}
-                  className="flex items-center space-x-2 mb-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    value={category}
-                    checked={formData.categories.includes(category)}
-                    onChange={handleCheckboxChange}
-                    className="w-4 h-4"
-                  />
-                  <span>{category}</span>
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Retail Channel */}
-        <div>
-          <label className="font-semibold block mb-2">Retail Channel *</label>
-          <select
-            name="retailChannel"
-            value={formData.retailChannel}
-            onChange={handleChange}
-            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
-          >
-            <option value="">Select Channel</option>
-            <option value="Amazon">Amazon</option>
-            <option value="Flipkart">Flipkart</option>
-            <option value="Meesho">Meesho</option>
-            <option value="Own Website">Own Website</option>
-          </select>
         </div>
       </div>
     </>

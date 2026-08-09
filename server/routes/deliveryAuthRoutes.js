@@ -12,6 +12,7 @@ import {
 } from "../controllers/AdminController.js";
 import { protect, authorizeRoles } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
+import User from "../models/User.js";
 const router = express.Router();
 
 // OTP routes for delivery partner verification
@@ -27,6 +28,7 @@ router.post(
     { name: "dlFront" },
     { name: "dlBack" },
     { name: "bankProofImage" },
+    { name: "rcImage" },
   ]),
   registerDeliveryPartner,
 );
@@ -50,5 +52,13 @@ router.put(
   authorizeRoles("admin", "superadmin"),
   rejectDelivery,
 );
-
+router.get("/me", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 export default router;

@@ -2,29 +2,30 @@ import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 587,
-  secure: false, // IMPORTANT
+  port: 465,
+  secure: true, // port 465 = SSL
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
   tls: {
-    rejectUnauthorized: false,
+    rejectUnauthorized: false, // ← self-signed certificate fix
   },
 });
 
-export const sendEmail = async (to, subject, text) => {
-  try {
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to,
-      subject,
-      text,
-    });
-    console.log("Email sent successfully:", info.response);
-    return info;
-  } catch (error) {
-    console.error("Email sending error:", error.message);
-    throw error;
-  }
+export const sendEmail = async (to, subject, message) => {
+  const isHtml =
+    message.trimStart().startsWith("<!DOCTYPE") ||
+    message.trimStart().startsWith("<html") ||
+    message.trimStart().startsWith("<table") ||
+    message.trimStart().startsWith("<div");
+
+  const info = await transporter.sendMail({
+    from: `"SellerHub" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    ...(isHtml ? { html: message } : { text: message }),
+  });
+
+  console.log("✓ Email sent:", info.messageId);
 };

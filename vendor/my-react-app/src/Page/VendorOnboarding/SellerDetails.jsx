@@ -79,7 +79,7 @@ const SellerDetails = ({ setIsStepValid }) => {
       setSaving(true);
       setError("");
       await saveVendorStep("sellerDetails", formData);
-      setSuccess("Data saved successfully");
+      //setSuccess("Data saved successfully");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.message || "Failed to save data");
@@ -97,11 +97,11 @@ const SellerDetails = ({ setIsStepValid }) => {
       </p>
 
       {/* Status Messages */}
-      {saving && (
+      {/* {saving && (
         <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mb-4">
           Saving...
         </div>
-      )}
+      )} */}
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
           {success}

@@ -11,27 +11,70 @@ import DigitalSignature from "../VendorOnboarding/DigitalSignature";
 import VerifySubmit from "../VendorOnboarding/VerifySubmit";
 import StatusBadge from "../../component/StatusBadge";
 import { vendorAPI } from "../../services/api";
-import TopProgressStepper from "../VendorOnboarding/TopProgressStepper";
 import LoginModal from "../../component/LoginModal";
+
+// ─── Step definitions ────────────────────────────────────────────────────────
+const STEPS = [
+  { label: "Business details", short: "Business" },
+  { label: "Seller details", short: "Seller" },
+  { label: "Brand details", short: "Brand" },
+  { label: "Bank details", short: "Bank" },
+  { label: "Shipping locations", short: "Shipping" },
+  { label: "Digital signature", short: "Signature" },
+  { label: "Verify & submit", short: "Verify" },
+];
+
+// ─── Status colours ──────────────────────────────────────────────────────────
+const STATUS_STYLE = {
+  approved: {
+    bg: "#f0fdf4",
+    border: "#bbf7d0",
+    text: "#15803d",
+    badge: "#22c55e",
+    title: "Application Approved! 🎉",
+  },
+  pending: {
+    bg: "#fffbeb",
+    border: "#fde68a",
+    text: "#b45309",
+    badge: "#f59e0b",
+    title: "Application Under Review",
+  },
+  rejected: {
+    bg: "#fef2f2",
+    border: "#fecaca",
+    text: "#dc2626",
+    badge: "#ef4444",
+    title: "Application Rejected",
+  },
+  draft: {
+    bg: "#f8fafc",
+    border: "#e2e8f0",
+    text: "#475569",
+    badge: "#94a3b8",
+    title: "Draft",
+  },
+};
+
+const STATUS_MSG = {
+  approved:
+    "Congratulations! Your vendor application has been approved. Your profile is now complete.",
+  pending:
+    "Your application is currently under review by our admin team. You cannot make changes at this time.",
+  rejected: (remark) =>
+    remark
+      ? `Your application was rejected. Reason: ${remark}. Please update your information and resubmit.`
+      : "Your application was rejected. Please update your information and resubmit.",
+  draft: "Complete all steps below and submit your application for review.",
+};
 
 const VendorOnboarding = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
-  const [saving, setSaving] = useState(false);
   const [vendor, setVendor] = useState(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [isStepValid, setIsStepValid] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-
-  const steps = [
-    "Business details",
-    "Seller details",
-    "Brand details",
-    "Bank details",
-    "Shipping locations",
-    "Digital signature",
-    "Verify & submit",
-  ];
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -46,270 +89,211 @@ const VendorOnboarding = () => {
   const fetchVendorStatus = async () => {
     try {
       setLoadingStatus(true);
-      const response = await vendorAPI.getMyVendor();
-      setVendor(response);
-    } catch (err) {
-      console.error("Failed to fetch vendor status:", err);
+      const res = await vendorAPI.getMyVendor();
+      setVendor(res);
+    } catch {
       setVendor(null);
     } finally {
       setLoadingStatus(false);
     }
   };
 
-  // Check if user is a new vendor (no profile yet)
-  const isNewVendor = !vendor && !loadingStatus;
-
-  const getStatusMessage = () => {
-    if (!vendor) return null;
-
-    switch (vendor.status) {
-      case "pending":
-        return {
-          type: "warning",
-          title: "Application Under Review",
-          message:
-            "Your application is currently under review by our admin team. You cannot make changes at this time.",
-        };
-      case "approved":
-        return {
-          type: "success",
-          title: "Application Approved! ",
-          message:
-            "Congratulations! Your vendor application has been approved. Your profile is now complete.",
-        };
-      case "rejected":
-        return {
-          type: "error",
-          title: "Application Rejected",
-          message: vendor.adminRemark
-            ? `Your application was rejected. Reason: ${vendor.adminRemark}. Please update your information and resubmit.`
-            : "Your application was rejected. Please update your information and resubmit.",
-        };
-      default:
-        return null;
-    }
-  };
-
-  const statusInfo = getStatusMessage();
   const isEditingDisabled =
     vendor && (vendor.status === "pending" || vendor.status === "approved");
+  const statusStyle = vendor
+    ? STATUS_STYLE[vendor.status] || STATUS_STYLE.draft
+    : null;
 
   const nextStep = () => {
-    if (currentStep < steps.length - 1 && isStepValid) {
-      setCurrentStep(currentStep + 1);
+    if (currentStep < STEPS.length - 1 && isStepValid) {
+      setCurrentStep((s) => s + 1);
       setIsStepValid(false);
       window.scrollTo(0, 0);
     }
   };
-
   const prevStep = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+      setCurrentStep((s) => s - 1);
       window.scrollTo(0, 0);
     }
   };
 
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 0:
-        return <BusinessDetails setIsStepValid={setIsStepValid} />;
-      case 1:
-        return <SellerDetails setIsStepValid={setIsStepValid} />;
-      case 2:
-        return <BrandDetails setIsStepValid={setIsStepValid} />;
-      case 3:
-        return <BankDetails setIsStepValid={setIsStepValid} />;
-      case 4:
-        return <ShippingLocations setIsStepValid={setIsStepValid} />;
-      case 5:
-        return <DigitalSignature setIsStepValid={setIsStepValid} />;
-      case 6:
-        return <VerifySubmit setIsStepValid={setIsStepValid} />;
-      default:
-        return null;
-    }
+  const renderStep = () => {
+    const map = [
+      BusinessDetails,
+      SellerDetails,
+      BrandDetails,
+      BankDetails,
+      ShippingLocations,
+      DigitalSignature,
+      VerifySubmit,
+    ];
+    const Comp = map[currentStep];
+    return Comp ? <Comp setIsStepValid={setIsStepValid} /> : null;
   };
 
   return (
     <>
       {showLoginModal && <LoginModal setOpenModal={setShowLoginModal} />}
-      <div className="h-screen mt-10 bg-white flex font-sans">
-        {/* Desktop Sidebar */}
-        {/* <div className="hidden md:flex flex-col w-80 bg-gradient-to-b from-[#299E60] to-[#14452F] text-white shadow-sm fixed left-0 top-0 h-screen"> */}
-        {/* Fixed Header Section - No Scroll */}
-        {/* <div className="p-8 space-y-4 flex-shrink-0">
-          <h1 className="text-2xl font-bold text-white">seller hub</h1>
-          <p className="text-yellow-300 text-4xl glow-text font-bold glow-text-strong">
-            by 3arrow
-          </p>
-        </div> */}
 
-        {/* Fixed Intro Content - No Scroll */}
-        {/* <div className="px-6 py-8 space-y-6 flex-shrink-0"> */}
-        {/* Intro Section */}
-        {/* <div>
-            <h2 className="text-2xl font-bold mb-1">
-              Welcome to 3arrow Seller Hub
-            </h2>
-            <p className="text-sm text-green-100 leading-relaxed">
-              Join a fast-growing marketplace designed to empower sellers.
-              3arrow provides the tools, logistics, and support you need to
-              expand your business and reach customers effortlessly.
-            </p>
-          </div> */}
+      <style>{CSS}</style>
 
-        {/* Compliance Notice */}
-        {/* <div className="bg-red-400/10 border border-red-400/30 rounded-xl p-4">
-            <p className="text-xs text-red-200 leading-relaxed">
-              ⚠️ Ensure that all business, tax, and banking details are
-              accurate. Incorrect information may delay verification, payments,
-              or approval.
-            </p>
-          </div>
-        </div> */}
-
-        {/* Scrollable Steps Section */}
-
-        {/* <div className="px-6 py-8 flex-1 overflow-y-auto">
-          <SidebarStepper steps={steps} currentStep={currentStep} />
-        </div>
-      </div> */}
-
-        {/* Main Content Area */}
-        <div className="flex-1  flex flex-col h-screen bg-gray-50">
-          {/* Mobile Header */}
-          {/* <div className="md:hidden bg-gradient-to-b from-[#299E60] to-[#14452F] text-white p-5 shadow-sm">
-          <h1 className="text-xl font-bold text-white">seller hub</h1>
-          <p className="text-yellow-300 text-sm">by 3arrow</p>
-        </div> */}
-
-          <div className="md:hidden bg-white shadow-sm">
-            <MobileStepper steps={steps} currentStep={currentStep} />
-          </div>
-
-          {/* Fixed Top Progress Stepper */}
-          <div className="bg-white shadow-sm px-6 md:px-12 py-6 flex-shrink-0">
-            <div className="max-w-5xl mx-auto">
-              <TopProgressStepper steps={steps} currentStep={currentStep} />
-            </div>
-          </div>
-
-          {/* Scrollable Content Area */}
-          <div className="flex-1 overflow-y-auto px-6 md:px-12 py-12">
-            <div className="max-w-5xl mx-auto">
-              {/* Status Alert */}
-              {!loadingStatus && statusInfo && (
-                <div
-                  className={`mb-8 p-6 rounded-lg border ${
-                    statusInfo.type === "warning"
-                      ? "bg-yellow-50 border-yellow-200 text-yellow-800"
-                      : statusInfo.type === "success"
-                        ? "bg-green-50 border-green-200 text-green-800"
-                        : "bg-red-50 border-red-200 text-red-800"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="font-semibold text-lg mb-1">
-                        {statusInfo.title}
-                      </h3>
-                      <p className="text-sm opacity-90">{statusInfo.message}</p>
+      <div className="vo-root">
+        {/* ══════════════════════════════════════════
+            TOP PROGRESS STEPPER
+        ══════════════════════════════════════════ */}
+        <div className="vo-stepper-bar">
+          <div className="vo-stepper-inner">
+            {STEPS.map((step, i) => {
+              const done = i < currentStep;
+              const active = i === currentStep;
+              return (
+                <React.Fragment key={i}>
+                  {/* connector line before each step except first */}
+                  {i > 0 && <div className={`vo-line${done ? " done" : ""}`} />}
+                  <div className="vo-step-wrap">
+                    <div
+                      className={`vo-circle${done ? " done" : active ? " active" : ""}`}
+                    >
+                      {done ? (
+                        <span className="vo-check">✓</span>
+                      ) : (
+                        <span>{i + 1}</span>
+                      )}
                     </div>
-                    <StatusBadge status={vendor.status} />
+                    <span
+                      className={`vo-step-label${active ? " active" : done ? " done" : ""}`}
+                    >
+                      {/* full label on md+, short on mobile */}
+                      <span className="vo-label-full">{step.label}</span>
+                      <span className="vo-label-short">{step.short}</span>
+                    </span>
+                  </div>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════
+            SCROLLABLE CONTENT
+        ══════════════════════════════════════════ */}
+        <div className="vo-content">
+          <div className="vo-content-inner">
+            {/* Status alert — single consolidated card */}
+            {!loadingStatus && vendor && statusStyle && (
+              <div
+                className="vo-status-card"
+                style={{
+                  background: statusStyle.bg,
+                  borderColor: statusStyle.border,
+                }}
+              >
+                <div className="vo-status-left">
+                  <div
+                    className="vo-status-dot"
+                    style={{ background: statusStyle.badge }}
+                  />
+                  <div>
+                    <div
+                      className="vo-status-title"
+                      style={{ color: statusStyle.text }}
+                    >
+                      {statusStyle.title}
+                    </div>
+                    <div
+                      className="vo-status-msg"
+                      style={{ color: statusStyle.text }}
+                    >
+                      {vendor.status === "rejected"
+                        ? STATUS_MSG.rejected(vendor.adminRemark)
+                        : STATUS_MSG[vendor.status]}
+                    </div>
                   </div>
                 </div>
-              )}
+                <span
+                  className="vo-badge"
+                  style={{
+                    background: `${statusStyle.badge}18`,
+                    color: statusStyle.badge,
+                    border: `1px solid ${statusStyle.badge}44`,
+                  }}
+                >
+                  {vendor.status.charAt(0).toUpperCase() +
+                    vendor.status.slice(1)}
+                </span>
+              </div>
+            )}
 
-              {/* Status Bar */}
-              {!loadingStatus && vendor && (
-                <div className="mb-8 p-4 bg-white rounded-lg border border-gray-200 flex items-center justify-between">
-                  <span className="text-sm text-gray-600">
-                    Current Status:
-                    <span className="ml-2 font-semibold text-gray-900">
-                      {vendor.status.toUpperCase()}
-                    </span>
-                  </span>
-                  <StatusBadge status={vendor.status} />
+            {/* Editing disabled notice */}
+            {!loadingStatus && isEditingDisabled && (
+              <div className="vo-info-box">
+                <span className="vo-info-icon">ℹ</span>
+                Your application status is <strong>'{vendor.status}'</strong>.
+                You cannot edit your profile at this time.
+              </div>
+            )}
+
+            {/* Step content */}
+            {!isEditingDisabled && (
+              <div className="vo-step-content">{renderStep()}</div>
+            )}
+
+            {/* Locked state: Go to Dashboard card */}
+            {isEditingDisabled && (
+              <div className="vo-locked-card">
+                <div className="vo-locked-icon">
+                  {vendor.status === "approved" ? "🎉" : "⏳"}
                 </div>
-              )}
+                <p className="vo-locked-text">
+                  {vendor.status === "approved"
+                    ? "Your vendor profile is complete and approved!"
+                    : "Please wait for admin review to complete."}
+                </p>
+                <button
+                  onClick={() => navigate("/dashboard")}
+                  className="vo-dash-btn"
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            )}
 
-              {isEditingDisabled && (
-                <div className="mb-8 p-4 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg">
-                  <p className="text-sm">
-                    ℹ️ Your application status is{" "}
-                    <span className="font-semibold">'{vendor.status}'</span>.
-                    You cannot edit your profile at this time.
-                  </p>
-                </div>
-              )}
-
-              {!isEditingDisabled && <>{renderStepContent()}</>}
-
-              {isEditingDisabled && (
-                <div className="p-8 bg-white rounded-lg border border-gray-200 text-center">
-                  <p className="text-gray-600 mb-6">
-                    {vendor.status === "approved"
-                      ? "Your vendor profile is complete and approved!"
-                      : "Please wait for admin review to complete."}
-                  </p>
-                  <a
-                    href="/dashboard"
-                    className="inline-block px-8 py-3 bg-[#299E60] hover:bg-[#207a4a] text-white rounded-lg font-semibold shadow-sm transition-all duration-200"
-                  >
-                    Go to Dashboard
-                  </a>
-                </div>
-              )}
-
-              {/* Spacer for content so it doesn't hide under fixed footer */}
-              {!isEditingDisabled && <div className="h-32"></div>}
-            </div>
+            {/* Spacer so content clears fixed footer */}
+            {!isEditingDisabled && <div style={{ height: 120 }} />}
           </div>
         </div>
 
-        {/* Fixed Footer - Navigation Buttons */}
+        {/* ══════════════════════════════════════════
+            FIXED FOOTER NAV
+        ══════════════════════════════════════════ */}
         {!isEditingDisabled && (
-          <div className="fixed bottom-0 left-0 right-0  bg-white border-t border-gray-200 shadow-lg z-40">
-            <div className="max-w-5xl mx-auto px-6 md:px-12 py-6 flex justify-between items-center gap-4">
+          <div className="vo-footer">
+            <div className="vo-footer-inner">
+              {/* Previous */}
               <button
                 onClick={prevStep}
                 disabled={currentStep === 0}
-                className={`px-8 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                  currentStep === 0
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                }`}
+                className={`vo-btn-prev${currentStep === 0 ? " disabled" : ""}`}
               >
                 ← Previous
               </button>
 
-              {saving && (
-                <div className="flex-1 p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded-lg text-center text-sm font-medium">
-                  Saving your progress...
-                </div>
-              )}
+              {/* Step counter (mobile) */}
+              <span className="vo-step-counter">
+                Step {currentStep + 1} of {STEPS.length}
+              </span>
 
-              {!saving && <div className="flex-1"></div>}
-
-              {currentStep < steps.length - 1 && (
+              {/* Next */}
+              {currentStep < STEPS.length - 1 && (
                 <button
                   onClick={nextStep}
                   disabled={!isStepValid}
-                  className={`px-8 py-3 rounded-lg font-semibold text-white shadow-sm transition-all duration-200 ${
-                    isStepValid
-                      ? "bg-[#299E60] hover:bg-[#207a4a] cursor-pointer"
-                      : "bg-gray-400 cursor-not-allowed opacity-60"
-                  }`}
+                  className={`vo-btn-next${!isStepValid ? " disabled" : ""}`}
                 >
                   Next →
                 </button>
               )}
-
-              {/* {currentStep === steps.length - 1 && (
-              <button className="px-8 py-3 rounded-lg font-semibold bg-[#299E60] hover:bg-[#207a4a] text-white shadow-sm transition-all duration-200">
-                Submit
-              </button>
-            )} */}
             </div>
           </div>
         )}
@@ -319,3 +303,372 @@ const VendorOnboarding = () => {
 };
 
 export default VendorOnboarding;
+
+// ─── CSS ─────────────────────────────────────────────────────────────────────
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+
+  /* ── Root layout ── */
+  .vo-root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: #f8fafc;
+    font-family: 'DM Sans', 'Segoe UI', sans-serif;
+    color: #111827;
+  }
+
+  /* ── Stepper bar ── */
+  .vo-stepper-bar {
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 20px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  }
+  .vo-stepper-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0;
+  }
+
+  /* connector line */
+  .vo-line {
+    flex: 1;
+    height: 2px;
+    background: #e5e7eb;
+    margin-top: 19px;
+    transition: background .3s;
+    min-width: 12px;
+  }
+  .vo-line.done { background: #5BB64A; }
+
+  /* step wrap */
+  .vo-step-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  /* circle */
+  .vo-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 2px solid #d1d5db;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #9ca3af;
+    transition: all .3s;
+    flex-shrink: 0;
+  }
+  .vo-circle.active {
+    border-color: #5BB64A;
+    background: #fff;
+    color: #5BB64A;
+    box-shadow: 0 0 0 4px rgba(91,182,74,0.15);
+  }
+  .vo-circle.done {
+    border-color: #5BB64A;
+    background: #5BB64A;
+    color: #fff;
+  }
+  .vo-check { font-size: 16px; font-weight: 900; }
+
+  /* label */
+  .vo-step-label {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    transition: color .3s;
+  }
+  .vo-step-label.active { color: #111827; font-weight: 800; }
+  .vo-step-label.done   { color: #5BB64A; font-weight: 600; }
+  .vo-label-short { display: none; }
+
+  /* ── Content ── */
+  .vo-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px 24px;
+  }
+  .vo-content-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── Status card ── */
+  .vo-status-card {
+    border: 1.5px solid;
+    border-radius: 12px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    animation: voFadeUp .3s ease;
+  }
+  .vo-status-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+  }
+  .vo-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+    animation: voPulse 2s infinite;
+  }
+  .vo-status-title {
+    font-size: 15px;
+    font-weight: 800;
+    margin-bottom: 4px;
+    letter-spacing: -0.2px;
+  }
+  .vo-status-msg {
+    font-size: 13.5px;
+    line-height: 1.6;
+    opacity: .85;
+  }
+  .vo-badge {
+    flex-shrink: 0;
+    padding: 5px 16px;
+    border-radius: 100px;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    align-self: flex-start;
+  }
+
+  /* ── Info box ── */
+  .vo-info-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    animation: voFadeUp .3s ease;
+  }
+  .vo-info-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #1d4ed8;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 900;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── Step content ── */
+  .vo-step-content {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 28px 32px;
+    animation: voFadeUp .3s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+
+  /* ── Locked card ── */
+  .vo-locked-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 48px 32px;
+    text-align: center;
+    animation: voFadeUp .3s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .vo-locked-icon {
+    font-size: 52px;
+    margin-bottom: 16px;
+  }
+  .vo-locked-text {
+    font-size: 16px;
+    color: #4b5563;
+    margin: 0 0 24px;
+    font-weight: 500;
+  }
+  .vo-dash-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 32px;
+    background: #5BB64A;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(91,182,74,0.35);
+    transition: all .2s;
+    letter-spacing: -0.2px;
+  }
+  .vo-dash-btn:hover {
+    background: #4aa33c;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(91,182,74,0.4);
+  }
+
+  /* ── Footer ── */
+  .vo-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top: 1.5px solid #e5e7eb;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+    z-index: 40;
+  }
+  .vo-footer-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .vo-step-counter {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  /* prev / next buttons */
+  .vo-btn-prev {
+    padding: 11px 24px;
+    border-radius: 10px;
+    border: 1.5px solid #e5e7eb;
+    background: #fff;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .vo-btn-prev:hover:not(.disabled) {
+    background: #f9fafb;
+    border-color: #d1d5db;
+  }
+  .vo-btn-prev.disabled {
+    background: #f3f4f6;
+    color: #9ca3af;
+    border-color: #f3f4f6;
+    cursor: not-allowed;
+  }
+  .vo-btn-next {
+    padding: 11px 28px;
+    border-radius: 10px;
+    border: none;
+    background: #5BB64A;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 3px 12px rgba(91,182,74,0.3);
+    transition: all .15s;
+  }
+  .vo-btn-next:hover:not(.disabled) {
+    background: #4aa33c;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(91,182,74,0.38);
+  }
+  .vo-btn-next.disabled {
+    background: #d1d5db;
+    color: #9ca3af;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  /* ── Animations ── */
+  @keyframes voFadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes voPulse {
+    0%,100% { opacity: 1; }
+    50%      { opacity: .45; }
+  }
+
+  /* ── RESPONSIVE ─────────────────────────────── */
+
+  /* Tablet (≤ 768px) */
+  @media (max-width: 768px) {
+    .vo-stepper-bar { padding: 14px 16px; }
+    .vo-circle { width: 32px; height: 32px; font-size: 12px; }
+    .vo-circle.active { box-shadow: 0 0 0 3px rgba(91,182,74,0.15); }
+    .vo-check { font-size: 13px; }
+    .vo-label-full  { display: none; }
+    .vo-label-short { display: inline; }
+    .vo-step-label  { font-size: 10px; }
+    .vo-line { margin-top: 16px; }
+
+    .vo-content { padding: 20px 16px; }
+    .vo-step-content { padding: 20px 18px; }
+    .vo-status-card { padding: 14px 16px; }
+    .vo-footer-inner { padding: 12px 16px; }
+  }
+
+  /* Mobile (≤ 480px) */
+  @media (max-width: 480px) {
+    /* Collapse stepper to just numbers — hide labels */
+    .vo-step-label { display: none; }
+    .vo-circle { width: 28px; height: 28px; font-size: 11px; }
+    .vo-line { margin-top: 14px; min-width: 6px; }
+    .vo-check { font-size: 11px; }
+
+    .vo-stepper-bar { padding: 12px 12px; }
+    .vo-stepper-inner { gap: 0; }
+
+    .vo-content { padding: 14px 12px; }
+    .vo-step-content { padding: 16px 14px; border-radius: 10px; }
+    .vo-locked-card { padding: 36px 20px; }
+    .vo-locked-icon { font-size: 40px; }
+    .vo-locked-text { font-size: 14px; }
+    .vo-dash-btn { width: 100%; justify-content: center; }
+
+    .vo-status-card { flex-direction: column; gap: 10px; }
+    .vo-badge { align-self: flex-start; }
+
+    .vo-btn-prev, .vo-btn-next { padding: 10px 18px; font-size: 13px; }
+    .vo-step-counter { font-size: 12px; }
+  }
+`;

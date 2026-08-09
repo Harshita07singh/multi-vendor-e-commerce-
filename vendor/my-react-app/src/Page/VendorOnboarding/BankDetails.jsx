@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { saveVendorStep, getMyVendor } from "../../services/vendorService";
 
 const BankDetails = ({ setIsStepValid }) => {
@@ -11,169 +11,314 @@ const BankDetails = ({ setIsStepValid }) => {
   });
 
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const debounceRef = useRef(null);
 
-  // Validate form fields
-  const validateForm = () => {
-    const isValid =
-      formData.accountHolderName &&
-      formData.accountNumber &&
-      formData.ifscCode &&
-      formData.bankName &&
-      formData.branch;
-    return isValid;
-  };
+  /* ── Validation ── */
+  const isValid = () =>
+    formData.accountHolderName.trim() !== "" &&
+    formData.accountNumber.trim() !== "" &&
+    formData.ifscCode.trim() !== "" &&
+    formData.bankName.trim() !== "" &&
+    formData.branch.trim() !== "";
 
-  // Update validation when formData changes
   useEffect(() => {
-    if (setIsStepValid) {
-      setIsStepValid(validateForm());
-    }
-  }, [formData, setIsStepValid]);
+    setIsStepValid?.(isValid());
+  }, [formData]);
 
-  // Load initial data from vendor profile
+  /* ── Load existing data ── */
   useEffect(() => {
-    const loadVendorData = async () => {
+    (async () => {
       try {
         const vendor = await getMyVendor();
         if (vendor?.bankDetails) {
-          setFormData((prev) => ({
-            ...prev,
-            ...vendor.bankDetails,
-          }));
+          setFormData((prev) => ({ ...prev, ...vendor.bankDetails }));
         }
-      } catch (err) {
-        console.log("No existing vendor data found");
-      }
-    };
-
-    loadVendorData();
+      } catch (_) {}
+    })();
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
-  // Auto-save when formData changes (debounced)
+  /* ── Auto-save (debounced 1.5s) ── */
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (formData.accountHolderName || formData.accountNumber) {
-        handleAutoSave();
-      }
-    }, 2000);
-
-    return () => clearTimeout(timer);
+    if (!formData.accountHolderName && !formData.accountNumber) return;
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(autoSave, 1500);
+    return () => clearTimeout(debounceRef.current);
   }, [formData]);
 
-  const handleAutoSave = async () => {
+  const autoSave = async () => {
     try {
       setSaving(true);
+      setSaved(false);
       setError("");
       await saveVendorStep("bankDetails", formData);
-      setSuccess("Data saved successfully");
-      setTimeout(() => setSuccess(""), 3000);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      setError(err.message || "Failed to save data");
-      console.error("Save error:", err);
+      setError(err.message || "Failed to save");
     } finally {
       setSaving(false);
     }
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    // IFSC always uppercase
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "ifscCode" ? value.toUpperCase() : value,
+    }));
+  };
+
+  const required = (field) => (!formData[field] ? " bk-input-warn" : "");
+
   return (
     <>
-      <h1 className="text-3xl font-bold mb-2">Bank Details</h1>
-      <p className="text-gray-500 mb-8">
-        Enter your bank account details for settlement
-      </p>
+      <style>{CSS}</style>
 
-      {/* Status Messages */}
-      {saving && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mb-4">
-          Saving...
-        </div>
-      )}
-      {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4">
-          {success}
-        </div>
-      )}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
-          {error}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Account Holder Name */}
+      {/* Header */}
+      <div className="bk-header">
         <div>
-          <label className="font-semibold block mb-2">
-            Account Holder Name *
+          <h2 className="bk-title">Bank Details</h2>
+          <p className="bk-sub">
+            Enter your bank account details for settlement payments.
+          </p>
+        </div>
+        <div className="bk-save-indicator">
+          {saving && (
+            <span className="bk-saving">
+              <span className="bk-dot-spin" /> Saving…
+            </span>
+          )}
+          {saved && !saving && (
+            <span className="bk-saved">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <path
+                  d="M2 6.5L5 9.5L11 3.5"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Security note */}
+      <div className="bk-security-note">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <path
+            d="M7.5 1L2 3.5V7c0 3.2 2.5 5.5 5.5 6.5C10.5 12.5 13 10.2 13 7V3.5L7.5 1Z"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M5 7.5l2 2 3-3"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        Your banking information is encrypted and stored securely.
+      </div>
+
+      {/* Error */}
+      {error && <div className="bk-alert">{error}</div>}
+
+      {/* Fields */}
+      <div className="bk-grid">
+        <div className="bk-field">
+          <label className="bk-label" htmlFor="accountHolderName">
+            Account Holder Name <span className="bk-req">*</span>
           </label>
           <input
+            id="accountHolderName"
             type="text"
             name="accountHolderName"
             value={formData.accountHolderName}
             onChange={handleChange}
-            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
+            placeholder="As per bank records"
+            className={`bk-input${required("accountHolderName")}`}
           />
         </div>
 
-        {/* Bank Name */}
-        <div>
-          <label className="font-semibold block mb-2">Bank Name *</label>
+        <div className="bk-field">
+          <label className="bk-label" htmlFor="bankName">
+            Bank Name <span className="bk-req">*</span>
+          </label>
           <input
+            id="bankName"
             type="text"
             name="bankName"
             value={formData.bankName}
             onChange={handleChange}
-            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
+            placeholder="e.g. State Bank of India"
+            className={`bk-input${required("bankName")}`}
           />
         </div>
 
-        {/* Account Number */}
-        <div>
-          <label className="font-semibold block mb-2">Account Number *</label>
+        <div className="bk-field">
+          <label className="bk-label" htmlFor="accountNumber">
+            Account Number <span className="bk-req">*</span>
+          </label>
           <input
+            id="accountNumber"
             type="text"
             name="accountNumber"
             value={formData.accountNumber}
             onChange={handleChange}
-            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
+            placeholder="Enter account number"
+            className={`bk-input${required("accountNumber")}`}
+            inputMode="numeric"
           />
         </div>
 
-        {/* IFSC Code */}
-        <div>
-          <label className="font-semibold block mb-2">IFSC Code *</label>
+        <div className="bk-field">
+          <label className="bk-label" htmlFor="ifscCode">
+            IFSC Code <span className="bk-req">*</span>
+          </label>
           <input
+            id="ifscCode"
             type="text"
             name="ifscCode"
             value={formData.ifscCode}
             onChange={handleChange}
-            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 uppercase focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
+            placeholder="e.g. SBIN0001234"
+            maxLength={11}
+            className={`bk-input bk-mono${required("ifscCode")}`}
           />
+          <span className="bk-hint-neutral">
+            11-character code printed on your cheque
+          </span>
         </div>
 
-        {/* Branch */}
-        <div>
-          <label className="font-semibold block mb-2">Branch *</label>
+        <div className="bk-field bk-field-full">
+          <label className="bk-label" htmlFor="branch">
+            Branch <span className="bk-req">*</span>
+          </label>
           <input
+            id="branch"
             type="text"
             name="branch"
             value={formData.branch}
             onChange={handleChange}
-            className="w-11/12 border border-gray-300 rounded-md px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#299E60] focus:border-[#299E60] transition"
+            placeholder="e.g. Connaught Place, New Delhi"
+            className={`bk-input${required("branch")}`}
           />
         </div>
       </div>
+
+      {/* Completion hint */}
+      {!isValid() && (
+        <div className="bk-required-note">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle
+              cx="7"
+              cy="7"
+              r="6"
+              stroke="currentColor"
+              strokeWidth="1.4"
+            />
+            <path
+              d="M7 4.5v3M7 9v.5"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+            />
+          </svg>
+          All five fields are required to proceed to the next step.
+        </div>
+      )}
     </>
   );
 };
 
 export default BankDetails;
+
+const CSS = `
+  .bk-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .bk-title { font-size: 17px; font-weight: 800; color: #111827; letter-spacing: -0.3px; margin: 0 0 3px; }
+  .bk-sub   { font-size: 13px; color: #6b7280; margin: 0; }
+
+  .bk-save-indicator { display: flex; align-items: center; }
+  .bk-saving {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; color: #6b7280; font-weight: 600;
+  }
+  .bk-saved {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12.5px; color: #166534; font-weight: 700;
+    background: #f0fdf4; border: 1.5px solid #86efac;
+    padding: 4px 10px; border-radius: 100px;
+  }
+  .bk-dot-spin {
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 2px solid #d1d5db; border-top-color: #5BB64A;
+    display: inline-block; animation: bkSpin 0.7s linear infinite;
+  }
+  @keyframes bkSpin { to { transform: rotate(360deg); } }
+
+  .bk-security-note {
+    display: flex; align-items: center; gap: 8px;
+    background: #f0fdf4; border: 1.5px solid #bbf7d0;
+    border-radius: 9px; padding: 10px 14px; font-size: 12.5px;
+    color: #166534; font-weight: 600; margin-bottom: 18px;
+  }
+  .bk-security-note svg { flex-shrink: 0; }
+
+  .bk-alert {
+    background: #fef2f2; border: 1.5px solid #fca5a5; color: #991b1b;
+    border-radius: 10px; padding: 11px 16px; font-size: 13px; font-weight: 500; margin-bottom: 16px;
+  }
+
+  .bk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 24px; margin-bottom: 16px; }
+  .bk-field { display: flex; flex-direction: column; gap: 6px; }
+  .bk-field-full { grid-column: 1 / -1; }
+
+  .bk-label {
+    font-size: 13px; font-weight: 700; color: #374151;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .bk-req { color: #ef4444; font-size: 13px; font-weight: 700; }
+
+  .bk-input {
+    width: 100%; padding: 10px 13px;
+    font-size: 13.5px; font-family: inherit; font-weight: 500;
+    color: #111827; background: #fff;
+    border: 1.5px solid #d1d5db; border-radius: 9px;
+    outline: none; -webkit-appearance: none; appearance: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .bk-input:focus {
+    border-color: #5BB64A;
+    box-shadow: 0 0 0 3.5px rgba(91,182,74,0.14), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .bk-input:hover:not(:focus):not(:disabled) { border-color: #9ca3af; }
+  .bk-input::placeholder { color: #b0b7c3; font-weight: 400; }
+  .bk-input-warn { border-color: #fca5a5 !important; }
+  .bk-mono { font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 1px; font-size: 13px; }
+
+  .bk-hint-neutral { font-size: 11.5px; color: #9ca3af; font-weight: 500; margin-top: -2px; }
+
+  .bk-required-note {
+    display: flex; align-items: center; gap: 8px;
+    background: #eff6ff; border: 1.5px solid #bfdbfe;
+    border-radius: 9px; padding: 11px 15px; font-size: 13px; color: #1d4ed8; font-weight: 500;
+  }
+  .bk-required-note svg { flex-shrink: 0; }
+
+  @media (max-width: 600px) {
+    .bk-grid { grid-template-columns: 1fr; }
+    .bk-field-full { grid-column: 1; }
+    .bk-header { flex-direction: column; gap: 8px; }
+  }
+`;

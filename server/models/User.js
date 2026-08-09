@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["pending", "active", "suspended"],
+      enum: ["pending", "approved", "active", "suspended"],
       default: "active",
     },
 
@@ -57,7 +57,59 @@ const userSchema = new mongoose.Schema(
     resetPasswordExpires: {
       type: Date,
     },
+    isOnline: { type: Boolean, default: false },
+    isAvailable: { type: Boolean, default: false },
+    zone: { type: String, trim: true, default: "" },
+    vehicleNumber: { type: String, trim: true, default: "" },
+    vehicleModel: { type: String, trim: true, default: "" },
+    vehicleYear: { type: String, trim: true, default: "" },
+    bankName: { type: String, trim: true, default: "" },
+    totalDeliveries: { type: Number, default: 0 },
+    totalEarnings: { type: Number, default: 0 },
+    averageRating: { type: Number, default: null },
+    ratingCount: { type: Number, default: 0 },
+    currentLocation: {
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null },
+      updatedAt: { type: Date, default: null },
+    },
+
+    // =========================
+    // Delivery-partner KYC data
+    // =========================
+    // Note: backend registration controller already sets these fields.
+    // They must exist in the schema so Mongoose persists them.
+    aadhaarNumber: String,
+    aadhaarFront: String,
+    aadhaarBack: String,
+
+    panNumber: String,
+    panImage: String,
+
+    drivingLicenseNumber: String,
+    dlFront: String,
+    dlBack: String,
+    dlExpiryDate: String,
+
+    dateOfBirth: String,
+    gender: String,
+    city: String,
+
+    vehicleType: String,
+    vehicleNumber: String,
+    vehicleModel: String,
+    vehicleYear: String,
+
+    accountHolderName: String,
+    accountNumber: String,
+    ifscCode: String,
+    bankName: String,
+    bankProofImage: String,
+    termsAccepted: Boolean,
+
+    rcImage: String,
   },
+
   { timestamps: true },
 );
 

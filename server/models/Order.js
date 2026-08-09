@@ -51,7 +51,14 @@ const orderSchema = new mongoose.Schema(
 
     /* delivery details */
     shippingAddress: { type: shippingAddressSchema, required: true },
-
+    assignedDeliveryPartner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    deliveryPickedAt: { type: Date, default: null },
+    deliveredAt: { type: Date, default: null },
+    deliveryEarning: { type: Number, default: 40 },
     deliveryType: {
       type: String,
       enum: ["standard", "express", "sameday"],
@@ -62,7 +69,7 @@ const orderSchema = new mongoose.Schema(
     /* payment */
     paymentMethod: {
       type: String,
-      enum: ["upi", "card", "netbanking", "cod"],
+      enum: ["upi", "razorpay", "card", "netbanking", "cod"],
       required: true,
     },
     isPaid: { type: Boolean, default: false },

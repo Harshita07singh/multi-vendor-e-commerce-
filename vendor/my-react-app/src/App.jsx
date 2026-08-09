@@ -1,50 +1,114 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import { Outlet } from "react-router-dom";
+// import { useState } from "react";
+// import reactLogo from "./assets/react.svg";
+// import viteLogo from "/F.png";
+// import { Outlet } from "react-router-dom";
+// import "./App.css";
+// import ProtectedRoute from "./components/ProtectedRoute";
+// import Hero from "./component/Hero/Hero";
+// import Footer from "./component/footer/Footer";
+// import { Routes, Route } from "react-router-dom";
+// import LoginSuccess from "./Page/LoginSuccess";
+// import VendorOnboarding from "./Page/VendorOnboarding/VendorOnboarding";
+// import VendorDashboard from "./Page/VendorDashboard";
+// import { useLocation } from "react-router-dom";
+// import Home from "./Page/Home";
+
+// // import ProductDetails from "./Page/ProductDetails";
+// // import CreateProduct from "./Page/Admin/CreateProduct";
+
+// function MainLayout() {
+//   const location = useLocation();
+
+//   // const hideFooter = location.pathname === "/vendor/onboarding";
+//   // const hideHeader = location.pathname === "/product/home";
+//   // const hideNavbar = location.pathname === "/product/home";
+//   return (
+//     <>
+//       {" "}
+//       <Outlet />
+//     </>
+//   );
+// }
+
+// function App() {
+//   return (
+//     <Routes>
+//       <Route element={<MainLayout />}>
+//         {/* ✅ Public routes */}
+//         <Route path="/" element={<Hero />} />
+//         <Route path="/login-success" element={<LoginSuccess />} />
+//         <Route path="/login-success/*" element={<LoginSuccess />} />
+
+//         {/* 🔒 Protected routes — must be logged in */}
+//         <Route element={<ProtectedRoute />}>
+//           <Route path="/dashboard" element={<VendorDashboard />} />
+//           <Route path="/vendor/onboarding" element={<VendorOnboarding />} />
+//           <Route path="/product/home" element={<Home />} />
+//         </Route>
+//       </Route>
+//     </Routes>
+//   );
+// }
+
+// export default App;
+
+import { lazy, Suspense } from "react";
+import { Outlet, Routes, Route, useLocation } from "react-router-dom";
 import "./App.css";
-import Navbar from "./component/navbar/Navbar";
-import Hero from "./component/Hero/Hero";
-import Footer from "./component/footer/Footer";
-import { Routes, Route } from "react-router-dom";
-import LoginSuccess from "./Page/LoginSuccess";
-import VendorOnboarding from "./Page/VendorOnboarding/VendorOnboarding";
-import VendorDashboard from "./Page/VendorDashboard";
-import { useLocation } from "react-router-dom";
-import Home from "./Page/Home";
-// import ProductDetails from "./Page/ProductDetails";
-// import CreateProduct from "./Page/Admin/CreateProduct";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-function MainLayout() {
-  const location = useLocation();
+// ─── Lazy-loaded pages ────────────────────────────────────────────────────────
+const Hero = lazy(() => import("./component/Hero/Hero"));
+const Footer = lazy(() => import("./component/footer/Footer"));
+const LoginSuccess = lazy(() => import("./Page/LoginSuccess"));
+const VendorOnboarding = lazy(
+  () => import("./Page/VendorOnboarding/VendorOnboarding"),
+);
+const VendorDashboard = lazy(() => import("./Page/VendorDashboard"));
+const Home = lazy(() => import("./Page/Home"));
 
-  // const hideFooter = location.pathname === "/vendor/onboarding";
-  // const hideHeader = location.pathname === "/product/home";
-  // const hideNavbar = location.pathname === "/product/home";
+// ─── Fallback loader ──────────────────────────────────────────────────────────
+function PageLoader() {
   return (
-    // <>
-    //   {!hideNavbar && <Navbar />}
-    
-    //   {!hideFooter && <Footer />}
-    // </>
-    <>  <Outlet /></>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "60vh",
+      }}
+    >
+      <span>Loading…</span>
+    </div>
   );
 }
 
+// ─── Layout ───────────────────────────────────────────────────────────────────
+function MainLayout() {
+  const location = useLocation();
+  return <Outlet />;
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
 function App() {
   return (
-    <Routes>
-      {/* Main layout routes with Navbar and Footer */}
-      <Route element={<MainLayout />}>
-        <Route path="/" element={<Hero />} />
-        <Route path="/login-success" element={<LoginSuccess />} />
-        <Route path="/dashboard" element={<VendorDashboard />} />
-        <Route path="/vendor/onboarding" element={<VendorOnboarding />} />
-        <Route path="/product/home" element={<Home />} />
-      </Route>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route element={<MainLayout />}>
+          {/* ── Public ── */}
+          <Route path="/" element={<Hero />} />
+          <Route path="/login-success" element={<LoginSuccess />} />
+          <Route path="/login-success/*" element={<LoginSuccess />} />
 
-      {/* Onboarding route without main layout */}
-    </Routes>
+          {/* ── Protected ── */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<VendorDashboard />} />
+            <Route path="/vendor/onboarding" element={<VendorOnboarding />} />
+            <Route path="/product/home" element={<Home />} />
+          </Route>
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }
 

@@ -46,14 +46,15 @@ const subCategorySchema = new Schema(
     vendor: {
       type: Schema.Types.ObjectId,
       ref: "Vendor",
-      required: true,
+      // required: true,
       index: true,
     },
   },
   { timestamps: true },
 );
 
-// Compound index
-subCategorySchema.index({ name: 1, category: 1 }, { unique: true });
+// Uniqueness should be vendor-scoped and case/format-insensitive.
+// We enforce this via the normalized `slug` (lowercased) instead of raw `name`.
+subCategorySchema.index({ vendor: 1, category: 1, slug: 1 }, { unique: true });
 
 export default model("SubCategory", subCategorySchema);

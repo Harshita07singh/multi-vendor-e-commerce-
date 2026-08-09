@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { getMyVendor } from "../services/vendorService";
 
 const LoginModal = ({ setOpenModal }) => {
   const [emailOrPhone, setEmailOrPhone] = useState("");
@@ -8,6 +9,9 @@ const LoginModal = ({ setOpenModal }) => {
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const API_BASE_UB =
+    import.meta.env.VITE_API_BASE_URL_UB || "http://localhost:3000";
 
   // 🔹 Send OTP
   const handleSendOTP = async () => {
@@ -18,7 +22,7 @@ const LoginModal = ({ setOpenModal }) => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/auth/vendor/send-otp", {
+      const res = await fetch(`${API_BASE_UB}/api/auth/vendor/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ emailOrPhone }),
@@ -37,49 +41,13 @@ const LoginModal = ({ setOpenModal }) => {
     }
   };
 
-  // 🔹 Verify OTP
-  //   const handleVerifyOTP = async () => {
-  //     if (!otp) return toast.error("Enter OTP");
-
-  //     try {
-  //       setLoading(true);
-
-  //       const res = await fetch(
-  //         "http://localhost:3000/api/auth/vendor/verify-otp",
-  //         {
-  //           method: "POST",
-  //           headers: { "Content-Type": "application/json" },
-  //           body: JSON.stringify({ emailOrPhone, otp }),
-  //         },
-  //       );
-
-  //       const data = await res.json();
-
-  //       if (!res.ok) throw new Error(data.message);
-
-  //       // ✅ Store token
-  //       localStorage.setItem("accessToken", data.token);
-  //       localStorage.setItem("user", JSON.stringify(data.user));
-
-  //       toast.success("Login successful 🎉");
-
-  //       setOpenModal(false);
-
-  //       // Optional redirect
-  //       navigate("/vendor/onboarding");
-  //     } catch (error) {
-  //       toast.error(error.message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
   const handleVerifyOTP = async () => {
     if (!otp) return toast.error("Enter OTP");
 
     try {
       setLoading(true);
 
-      const res = await fetch("/api/auth/vendor/verify-otp", {
+      const res = await fetch(`${API_BASE_UB}/api/auth/vendor/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ emailOrPhone, otp }),
@@ -94,11 +62,20 @@ const LoginModal = ({ setOpenModal }) => {
       localStorage.setItem("user", JSON.stringify(data.user));
 
       toast.success("Login successful 🎉");
-
       setOpenModal(false);
 
-      // 🔥 Navigate to onboarding
-      navigate("/vendor/onboarding");
+      // ✅ FIX: Check vendor profile, then navigate to the correct relative path
+      try {
+        const vendor = await getMyVendor();
+        if (vendor) {
+          navigate("/dashboard");
+        } else {
+          navigate("/vendor/onboarding");
+        }
+      } catch {
+        // Fallback to onboarding if check fails
+        navigate("/vendor/onboarding");
+      }
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -106,9 +83,10 @@ const LoginModal = ({ setOpenModal }) => {
     }
   };
 
-  // 🔹 Google Login
+  // 🔹 Google Login — always redirect to the API server, not the frontend
   const handleGoogleLogin = () => {
-    window.location.href = "/api/auth/vendor/google";
+    // ✅ FIX: Use the full backend URL directly for OAuth redirect
+    window.location.href = `${API_BASE_UB}/api/auth/vendor/google`;
   };
 
   return (
